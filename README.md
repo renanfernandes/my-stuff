@@ -23,8 +23,15 @@ Just a few changes will make it looking way better, like below:
 1. Download the Dracula Terminal color scheme from this Github repository: https://github.com/lysyi3m/macos-terminal-themes
 2. Open the `dracula.terminal` file and set it as default on macOS
 3. <img src="images/terminal_config.png" width="800">
-4. Add the following lines to ~/.bash_profile or ~/.bashrc
-```alias ls='ls -G'
+4. Set background Opacity to 78%
+5. <img src="images/terminal_config2.png" width="800">
+6. On Window tab, set the terminal size to 100x30
+7. <img src="images/terminal_config3.png" width="800">
+8. Finally, on shell, set the Startup/Run Command to : `source ~/.profile ; reset`
+9. <img src="images/terminal_config4.png" width="800">
+10. Add the following lines to ~/.profile
+```
+alias ls='ls -G'
 alias ll='ls -lG'
 ```
 4. Apply the changes right away: `source ~/.bash_profile`
