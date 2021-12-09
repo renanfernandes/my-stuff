@@ -24,7 +24,7 @@ Just a few changes will make it looking way better, like below:
 2. Open the `dracula.terminal` file and set it as default on macOS
 3. <img src="images/terminal_config.png" width="800">
 4. Set background Opacity to 78%
-5. <img src="images/terminal_config2.png" width="800">
+5. <img src="images/terminal_config2.png" width="300">
 6. On Window tab, set the terminal size to 100x30
 7. <img src="images/terminal_config3.png" width="800">
 8. Finally, on shell, set the Startup/Run Command to : `source ~/.profile ; reset`
