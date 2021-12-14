@@ -13,7 +13,8 @@ Table of Contents
     * [Provisioning the VM](#provisioning-the-vm)
     * [Configuring the Syslog Server](#configuring-the-syslog-server)
     * [Creating a Firewall rule to allow incoming traffic to Logstash](#creating-a-firewall-rule-to-allow-incoming-traffic-to-logstash)
-    * [Configuring pfSense](#configuring-pfSense)
+   * [Configuring pfSense](#configuring-pfSense)
+   * [Configuring Log Analytics Workspace](#configuring-log-analytics-workspace)
 <!--te-->
 
 # macOS Stuff
@@ -48,21 +49,21 @@ As my home network continues to grow and more and more IoT devices are added, I 
 
 To start, the diagram below shows how my home network is currently set up. I will focus on collecting the Netgate SG-1100 logs into Sentinel, for this, we first need a Syslog server
 
-# Syslog server
+## Syslog server
 First of all, we need a lace to host our Syslog server. The way it works is that your Firewall (in my case my Netgate SG-1100) will send our logs to my Syslog server, that wil eventually relay the logs to Azure Sentinel.
 
 You can run either a Windows or Linux server for your Syslog server and you can host on premise or in the cloud. Since my final goal is to ship the logs to Sentinel, I decided to create a Linux VM and host in Azure.
 
 This will allow expansion in the future and permit me connecting my servers overseas to this infrascture all well (but thats a topic for another discussion)
 
-## Provisioning the VM
+### Provisioning the VM
 Since I am not doing anything fancy and all I need is to collect syslogs, I provisioned a single VM with Ubuntu 21.10 and used **Standard_B2s** size. Which gives me 2 vCPUs and 4 GB of RAM at East US 2 Region. Costing me approximately $30.37/month, not bad!
 
 <img src="images/syslog-azure1.png" width="600">
 
 Now that your VM is up, its time to configure Rsyslog Server
 
-## Configuring the Syslog Server
+### Configuring the Syslog Server
 First things first... Ensure you have the most up-to-date version of your packages and OS by running apt update:
 ```
 sudo apt update
@@ -185,7 +186,7 @@ sudo tcpdump -A -ni any port 5140 -v
 
 Keep this terminal up so you can check if you are receiving packages once you finish the pfSense configuration
 
-## Creating a Firewall rule to allow incoming traffic to Logstash
+### Creating a Firewall rule to allow incoming traffic to Logstash
 We are almost there. Now you need to allow incoming connections to port 5140, so your pfSense can report logs to Logstash.
 
 On Azure Portal, go to your VM > Networking and add the following Rule:
@@ -203,15 +204,44 @@ General Logging Options.
 Show log entries in reverse order. (newest entries on top)
 General Logging Options > Log firewall default blocks. (optional)
 
-Log packets matched from the default block rules in the ruleset.
-Log packets matched from the default pass rules put in the ruleset.
-Log packets blocked by 'Block Bogon Networks' rules.
-Log packets blocked by 'Block Private Networks' rules.
-Log errors from the web server process.
+1. Log packets matched from the default block rules in the ruleset.
+2. Log packets matched from the default pass rules put in the ruleset.
+3. Log packets blocked by 'Block Bogon Networks' rules.
+4. Log packets blocked by 'Block Private Networks' rules.
+5. Log errors from the web server process.
+
 Remote Logging Options:
 
-check "Send log messages to remote syslog server".
-Select a specific interface to use for forwarding. (Optional)
-Select IPv4 for IP Protocol.
-Enter the Logstash server local IP into the field Remote log servers with port 5140. (e.g. 192.168.1.50:5140)
-Under "Remote Syslog Contents" check "Everything".
+1. check "Send log messages to remote syslog server".
+2. Select a specific interface to use for forwarding. (Optional)
+3. Select IPv4 for IP Protocol.
+4. Enter the Logstash server local IP into the field Remote log servers with port 5140. (e.g. 192.168.1.50:5140)
+5. Under "Remote Syslog Contents" check "Everything".
+
+## Configuring Log Analytics Workspace
+
+Log on Azure Portal and go to `Log Analytics workspace` settings.
+Select `Agents Management` and make a note of your `Workspace ID` and `Primary Key`. If you don't have a Log Analytics Workspace, now is the time to create one!
+Install the Microsoft Logstash LogAnalytics plugin by using the following command:
+```
+sudo /usr/share/logstash/bin/logstash-plugin install microsoft-logstash-output-azure-loganalytics
+```
+
+Edit the Logstash configuration and add your workspace id and key to /etc/logstash/conf.d/50-outputs.conf.
+```
+output {
+    microsoft-logstash-output-azure-loganalytics {
+        workspace_id => "<WORKSPACE ID>" # <your workspace id>
+        workspace_key => "<Primary Key>" # <your workspace key>
+        custom_log_table_name => "<Name of Log>"
+        }
+    }
+```
+
+Restart Logstash
+
+```
+sudo systemctl enable logstash
+sudo systemctl start logstash
+```
+
