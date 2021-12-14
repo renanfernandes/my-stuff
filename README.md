@@ -12,6 +12,8 @@ Table of Contents
   * [Syslog server](#syslog-server)
     * [Provisioning the VM](#provisioning-the-vm)
     * [Configuring the Syslog Server](#configuring-the-syslog-server)
+    * [Creating a Firewall rule to allow incoming traffic to Logstash](#creating-a-firewall-rule-to-allow-incoming-traffic-to-logstash)
+    * [Configuring pfSense](#configuring-pfSense)
 <!--te-->
 
 # macOS Stuff
@@ -153,3 +155,63 @@ sudo wget https://raw.githubusercontent.com/noodlemctwoodle/pfsense-azure-sentin
 sudo wget https://raw.githubusercontent.com/noodlemctwoodle/pfsense-azure-sentinel/main/Logstash-Configuration/etc/logstash/conf.d/databases/private-hostnames.csv -P /etc/logstash/conf.d/databases/
 ```
 
+Now your templates and database is created, lets export your rules from pfSense.
+
+On pfSense, go to Diagnostics > Command Prompt and type in the following command to export the rules :
+```
+pfctl -vv -sr | grep label | sed -r 's/@([[:digit:]]+).*(label "|label "USER_RULE: )(.*)".*/"\1","\3"/g' | sort -V -u | awk 'NR==1{$0="\"Rule\",\"Label\""RS$0}7'
+```
+
+Now save this data and create the file `/etc/logstash/conf.d/databases/rule-names.csv` with this content, this will give you all rules and descriptions from pfSense.
+
+Last step is to edit /etc/logstash/conf.d/20-interfaces.conf and change the interface name for the right interface. In my case, I changed from `igb2` to `eth0`:
+
+```
+    ### Change interface as desired ###
+    if [interface][name] =~ /^eth0$/ {
+      mutate {
+        add_field => { "[interface][alias]" => "WAN" }
+        add_field => { "[network][name]" => "FiOS" }
+      }
+    }
+```
+
+You are almost done! last step is to restart logstash and start a tcpdump to check for connections on logstash port 5140
+```
+sudo service logstash stop
+sudo service logstash start
+sudo tcpdump -A -ni any port 5140 -v
+```
+
+Keep this terminal up so you can check if you are receiving packages once you finish the pfSense configuration
+
+## Creating a Firewall rule to allow incoming traffic to Logstash
+We are almost there. Now you need to allow incoming connections to port 5140, so your pfSense can report logs to Logstash.
+
+On Azure Portal, go to your VM > Networking and add the following Rule:
+<img src="images/syslog-azure2.png" width="600">
+
+Be advised that you should also restrict the Source Ip to ensure that only your pfSense is allowed to send logs to logstash. I'm ommiting the IP address here for obvious reasons.
+
+## Configuring pfSense
+The final and last step of this configuration is to allow pfSense to ship the logs to your Syslog server.
+
+In pfSense navigate to Status -> System Logs -> Settings.
+
+General Logging Options.
+
+Show log entries in reverse order. (newest entries on top)
+General Logging Options > Log firewall default blocks. (optional)
+
+Log packets matched from the default block rules in the ruleset.
+Log packets matched from the default pass rules put in the ruleset.
+Log packets blocked by 'Block Bogon Networks' rules.
+Log packets blocked by 'Block Private Networks' rules.
+Log errors from the web server process.
+Remote Logging Options:
+
+check "Send log messages to remote syslog server".
+Select a specific interface to use for forwarding. (Optional)
+Select IPv4 for IP Protocol.
+Enter the Logstash server local IP into the field Remote log servers with port 5140. (e.g. 192.168.1.50:5140)
+Under "Remote Syslog Contents" check "Everything".
