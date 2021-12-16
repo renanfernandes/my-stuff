@@ -15,6 +15,9 @@ Table of Contents
     * [Creating a Firewall rule to allow incoming traffic to Logstash](#creating-a-firewall-rule-to-allow-incoming-traffic-to-logstash)
    * [Configuring pfSense](#configuring-pfSense)
    * [Configuring Log Analytics Workspace](#configuring-log-analytics-workspace)
+   * [Final Step: Sentinel!](#Final-Step-Sentinel)
+    * [First Rule: Detecting lateral movement](#first-rule-detecting-lateral-movement)
+
 <!--te-->
 
 # macOS Stuff
@@ -245,3 +248,43 @@ sudo systemctl enable logstash
 sudo systemctl start logstash
 ```
 
+Within a few minutes you should start seeing events hitting Log Analytics
+
+## Final Step: Sentinel!
+If you haven't done it yet, Add Microsoft Sentinel to your Log Analytics workspace. After some minutes you'll start seeing the events hitting Sentinel
+<img src="images/sentinel1.png" width="800">
+
+As you can see, I have a rule called "IoT Devices Trying to do something strange". To ilustrate some basic capabilities, I'll show below how to create a simple KQL query to detect if my IoT devices, that are sitting on my IoT VLAN tries to reach out my Trusted VLAN.
+
+
+### First Rule: Detecting lateral movement
+In Sentinel, navigate to Logs and create a new query similar to this one:
+
+```SQL
+// Blocked IoT devices trying to communicate to Trusted VLAN
+pfSenseLogstash_CL
+| where TimeGenerated > ago(1m)
+| where interface_alias_s == "mvneta0.50"
+| extend event_created_t = TimeGenerated
+| project TimeGenerated, source_ip_s, source_port_s, destination_ip_s, destination_port_s,
+    network_direction_s, event_action_s, event_reason_s, rule_description_s, destination_service_s, network_transport_s
+```
+
+This query searches for alerts occuring at `vneta0.50` which is my IoT VLAN. So at the end of the day if my IOT devices are doing something that would violate one of my firewall rules, I need to check what happened.
+
+<img src="images/sentinel2.png" width="800">
+
+After you test this query go to `New Alert rule` > `Create Azure Sentinel Alert`
+
+Fill in the name, Description and Severity of this rule and move to `Set rule logic`
+<img src="images/sentinel_rule1.png" width="800">
+
+Sentinel gives you cool capabilities to Enrich your alerts, map and automate response. For the sake of this example, we will just create a simple rule, so click `Next` until you hit the `Review and create` screen.
+
+The Review and create screen will validate the rule and if everything went well, allow you to `Create` your rule.
+<img src="images/sentinel_rule2.png" width="800">
+
+
+Voila! Now you have your first rule created and your pfSense is reporting events to Sentinel.
+
+Next time I'll show how to create a Dashboard and Alerts to expand your deployment
