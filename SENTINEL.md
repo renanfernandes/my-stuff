@@ -31,7 +31,7 @@ So the idea is to start shipping my pfSense logs to [Microsoft Sentinel](https:/
 
 Microsoft Sentinel provides a Pay-As-You-Go [Pricing](https://azure.microsoft.com/en-us/pricing/details/azure-sentinel/) currently at $2.46 per GB ingested, that should keep the costs minimal for my home use and give me a lot of flexibility to create rules, orchestration and automation. So, no brainer :)
 
-Ok, to put everything together, I created this draft to show what I will be deploying as my final solution:
+Ok! To put everything together, I created this draft to show what I will be deploying as my final solution:
 
 <img src="images/architecture.png" width="600">
 
@@ -47,7 +47,7 @@ First of all, we need a place to host our Syslog server. The way it works is tha
 
 You can run either a Windows or Linux server for your Syslog server and you can host on premise or in the cloud. Since my final goal is to ship the logs to Sentinel, I decided to create a Linux VM and host in Azure.
 
-This will allow expansion in the future and permit me connecting my servers overseas to this infrascture all well (but thats a topic for another discussion)
+This will give room to expand and allow me to connect my servers overseas to this infrastructure, but thats a topic for another day.
 
 ### Provisioning the VM
 Since I am not doing anything fancy and all I need is to collect syslogs, I provisioned a single VM with Ubuntu 21.10 and used **Standard_B2s** size. Which gives me 2 vCPUs and 4 GB of RAM at East US 2 Region. Costing me approximately $30.37/month, not bad!
@@ -63,13 +63,13 @@ sudo apt update
 sudo apt upgrade
 ```
 
-
 For consistency, lets ensure that your timeone is correct. In my case, America/New_York:
+
 ```
 sudo timedatectl set-timezone America/New_York
 ```
 
-**Announcement!!**
+**Disclaimer 2!!**
 From now one, I'll rely on this amazing [Microsoft Tech Community Post](https://techcommunity.microsoft.com/t5/microsoft-sentinel/pfsense-syslog-to-azure-sentinel-guide/m-p/2004352) to configure and install elastic. You can follow the guide on the link or refer to my instructions below that provides some few changes to the config.
 
 Ok, back to the instructions. First of all, we will need to install Logstash. For that, we need to first, Download and install the public GPG signing key:
