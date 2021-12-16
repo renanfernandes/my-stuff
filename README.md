@@ -264,22 +264,23 @@ pfSenseLogstash_CL
 
 This query searches for alerts occuring at `vneta0.50` which is my IoT VLAN. So at the end of the day if my IOT devices are doing something that would violate one of my firewall rules, I need to check what happened.
 
-<img src="images/sentinel2.png" width="800">
+<img src="images/sentinel2.png" width="600">
 
 After you test this query go to `New Alert rule` > `Create Azure Sentinel Alert`
 
 Fill in the name, Description and Severity of this rule and move to `Set rule logic`
-<img src="images/sentinel_rule1.png" width="800">
+<img src="images/sentinel_rule1.png" width="600">
 
 Sentinel gives you cool capabilities to Enrich your alerts, map and automate response. For the sake of this example, we will just create a simple rule, so click `Next` until you hit the `Review and create` screen.
 
 The Review and create screen will validate the rule and if everything went well, allow you to `Create` your rule.
-<img src="images/sentinel_rule2.png" width="800">
+<img src="images/sentinel_rule2.png" width="600">
 
 
 Voila! Now you have your first rule created and your pfSense is reporting events to Sentinel.
 
 Next time I'll show how to create a Dashboard and Alerts to expand your deployment
+<br><br>
 
 # macOS Stuff
 Configuration files and scripts to make my macOS better for day-to-day activities
