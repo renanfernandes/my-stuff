@@ -1,4 +1,4 @@
-# my-stuff
+# Lab Stuff
 
 Just a collection of templates, scripts, configuration files and testing observations to make my life easier. This is part of my own GitHub repository (and one of the fews I make public), so use the content and scripts here at your own risk :)
 
