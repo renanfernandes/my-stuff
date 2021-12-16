@@ -22,10 +22,30 @@ Table of Contents
 # Integrating Sentinel and Home Infrastructure
 As my home network continues to grow and more and more IoT devices are added, I felt the need to better improve my home security posture and frankly have a better visibilty over what is going on in my network.
 
-To start, the diagram below shows how my home network is currently set up. I will focus on collecting the Netgate SG-1100 logs into Sentinel, for this, we first need a Syslog server
+To start, the diagram below shows how my home network is currently set up. Without going too much into details, I have three VLANs, 1) IoT, 2) Trusted Network, 3) Servers and 4) Untrusted/Guest Network.
+
+<img src="images/diagram.png" width="600">
+
+My IoT VLAN goes out to the internet, but have no access to my Trusted VLAN, except for mdns broadcast that thanks to [Avahi](http://avahi.org), allows me to control my IoT devices when I am at home.
+This is all ultimately controlled by pfSense running on my Netgate SG-1100. I am expanding the Network so after the holidays I'll replace SG-1100 for something a little bit more powerful.
+
+So the idea is to start shipping my pfSense logs to [Microsoft Sentinel](https://azure.microsoft.com/en-us/services/azure-sentinel/), where I can better monitor my Network and detect suspicious activity. 
+
+Microsoft Sentinel provides a Pay-As-You-Go [Pricing](https://azure.microsoft.com/en-us/pricing/details/azure-sentinel/) currently at $2.46 per GB ingested, that should keep the costs minimal for my home use and give me a lot of flexibility to create rules, orchestration and automation. So, no brainer :)
+
+Ok, to put everything together, I created this draft to show what I will be deploying as my final solution:
+
+<img src="images/architecture.png" width="600">
+
+I will be deploying a Syslog server on Azure, allowing me to scale the solution and forward syslog events from some key servers and applications I host locally.
+My syslog data will be stored on Log Analytics Workspace that in the end will be added to Sentinel for Ingestion and Analysis.
+
+So lets start!
+
+*Disclaimer: This guide is merely a collection and notes of my experience doing this fun project. I used several resources and references to build this guide, such as: this amazing [Microsoft Tech Community Post](https://techcommunity.microsoft.com/t5/microsoft-sentinel/pfsense-syslog-to-azure-sentinel-guide/m-p/2004352) and this great [repository](https://github.com/noodlemctwoodle/pf-azure-sentinel/tree/main/Logstash-Configuration) maintained by noodlemctwoodle. I've updated the instructions below with the latest configurations and changes required.*
 
 ## Syslog server
-First of all, we need a lace to host our Syslog server. The way it works is that your Firewall (in my case my Netgate SG-1100) will send our logs to my Syslog server, that wil eventually relay the logs to Azure Sentinel.
+First of all, we need a place to host our Syslog server. The way it works is that your Firewall (in my case my Netgate SG-1100) will send its logs to the Syslog server, that wil eventually relay the logs to Azure Sentinel.
 
 You can run either a Windows or Linux server for your Syslog server and you can host on premise or in the cloud. Since my final goal is to ship the logs to Sentinel, I decided to create a Linux VM and host in Azure.
 
