@@ -1,6 +1,9 @@
 #!/usr/bin/python
 
-"""Notifies myself of IP change."""
+"""Send a pushover notification when the IP changes.
+requires pip install python-pushover"""
+
+from pushover import Client
 import smtplib
 import requests
 import os
@@ -11,19 +14,7 @@ from email.mime.text import MIMEText
 ADDRESS_FILE = '/tmp/old_ip_address.txt'
 
 def notify_ip_change(newIp):
-    msg = MIMEText("Alert! The server's IP has changed to %s" % newIp)
-
-    sender = 'sender@example.com'
-    recipient = 'receiver@example.com'
-    msg['Subject'] = 'Alert - IP address has changed'
-    msg['From'] = sender
-    msg['To'] = recipient
-
-    # Send the message via our own SMTP server, but don't include the
-    # envelope header.
-    s = smtplib.SMTP('localhost')
-    s.sendmail(sender, recipient, msg.as_string())
-    s.quit()
+    Client().send_message("Campinas IP has changed to:" + newIp, title="Public IP Change")
 # [notify_if_change ends]
 
 
