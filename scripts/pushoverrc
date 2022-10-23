@@ -1,0 +1,4 @@
+# add this file to ~/.pushoverrc
+[Default]
+api_token=<s>aaaaaa</s>
+user_key=<s>xxxxxx</s>
