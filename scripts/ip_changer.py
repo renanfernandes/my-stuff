@@ -4,12 +4,9 @@
 requires pip install python-pushover"""
 
 from pushover import Client
-import smtplib
+import sys
 import requests
 import os
-
-# Import the email modules we'll need
-from email.mime.text import MIMEText
 
 ADDRESS_FILE = '/tmp/old_ip_address.txt'
 
@@ -55,7 +52,7 @@ def read_old_ip():
 def main():
     deltaTuple = detect_ip_change()
     if deltaTuple[0] is True:
-        #notify_ip_change(deltaTuple[1])
+        notify_ip_change(deltaTuple[1])
         print("IP changed. Email sent!")
     else:
         print("No news is good news.")
