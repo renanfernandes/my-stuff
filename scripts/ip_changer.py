@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 """Send a pushover notification when the IP changes.
 requires pip install python-pushover"""
