@@ -15,3 +15,5 @@ This is where i post templates, scripts, configuration files, testing observatio
 --
 1. [mystuff.md](https://github.com/renanfernandes/my-stuff/blob/main/stuff.md)
     + Just a collection of random stuff to make my life easier.
+2. [SENTINEL.md](https://github.com/renanfernandes/my-stuff/blob/main/SENTINEL.md)
+    + How to guide on integrating Sentinel with pfSense
