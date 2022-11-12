@@ -9,3 +9,9 @@ This is where i post templates, scripts, configuration files, testing observatio
 1. [ip_changer.py](https://github.com/renanfernandes/my-stuff/blob/main/scripts/ip_changer.py)
     + Notifies if the internet facing ip has changed. 
         - Dependency: `python-pushover` and `~/.pushoverrc` (example provided) 
+
+
+**Other Random Stuff**
+--
+1. [mystuff.md](https://github.com/renanfernandes/my-stuff/blob/main/stuff.md)
+    + Just a collection of random stuff to make my life easier.
