@@ -7,14 +7,14 @@ import pushover
 
 
 def main():
+    #initiate the pushover and transmission-rpc objects
     notification = pushover.Client()
     c = Client(username='transmission', password='transmission')
+
     for t in c.get_torrents():
-        print(dir(t))
-        print(t.progress)
-	#if t.is_finished:
-        #    print("finished "+ t.name)
-        #    notification.send_message("Torrent completed: " + t.name)
+        if t.progress == 100.0:
+            print("finished "+ t.name)
+            notification.send_message("Torrent completed: " + t.name)
         #else:
         #    print("not finished" + t.name)
 
