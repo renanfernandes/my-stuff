@@ -14,7 +14,7 @@ def read_last_notification():
         return None
 
 def write_last_notification(notification):
-    with open("last_notification.txt", "w") as file:
+    with open("last_notification.txt", "a") as file:
         file.write(notification)
 
 def main():
@@ -26,6 +26,7 @@ def main():
         if t.progress == 100.0:
             print("Finished " + t.name)
             last_notification = read_last_notification()
+            print(last_notification)
             if last_notification != t.name:
                 notification.send_message("Torrent completed: " + t.name)
                 write_last_notification(t.name)
