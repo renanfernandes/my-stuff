@@ -15,7 +15,7 @@ def read_last_notification():
 
 def write_last_notification(notification):
     with open("last_notification.txt", "a") as file:
-        file.write(notification)
+        file.write(notification + "\n")
 
 def main():
     # Initialize the pushover and transmission-rpc objects
