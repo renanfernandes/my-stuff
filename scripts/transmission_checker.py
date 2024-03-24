@@ -27,7 +27,7 @@ def main():
             print("Finished " + t.name)
             last_notification = read_last_notification()
             print(last_notification)
-            if last_notification != t.name:
+            if not last_notification in t.name:
                 notification.send_message("Torrent completed: " + t.name)
                 write_last_notification(t.name)
         # else:
