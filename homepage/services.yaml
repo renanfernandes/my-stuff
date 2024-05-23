@@ -1,0 +1,118 @@
+- Atlanta:
+    -  Unifi:
+        icon: unifi-controller.png
+        ping: https://10.0.0.1:443
+        href: https://10.0.0.1:443
+        description: UDM Pro Console
+        widget:
+            type: unifi
+            url: https://10.0.0.1:443
+            username: homepage
+            password: Pa!!s?sh80mdfsitow4
+    - Plex Atlanta:
+        icon: plex.png
+        ping: http://10.0.0.2:32400
+        href: http://10.0.0.2:32400
+        description: Movies & Shows hosted in Atlanta
+        widget:
+            type: plex
+            url: http://10.0.0.2:32400
+            key: 4WTAkZ78WQE9GfCxjEt3
+    - piHole:
+        icon: pi-hole.png
+        ping: http://10.0.0.4
+        href: http://10.0.0.4/admin
+        description: piHole DNS Server
+        widget:
+            type: pihole
+            url: http://10.0.0.4
+            key: 3a98d8e94b4c66d11966dd9aec93d8155f76bdb1691b91c8a5387b5f15e48ba5 # optional
+    - Windows Server 2022:
+        icon: microsoft.png
+        ping: https://10.0.0.2:443
+        href: https://10.0.0.2:443
+        description: Windows Server 2022 - Host
+
+
+- Campinas:
+    - PfSense:
+        icon: pfsense.png
+        ping: https://10.0.5.1:443
+        href: https://10.0.5.1:443
+        description: pfSense Console
+        widget:
+            type: pfsense
+            url: https://10.0.5.1:443
+            username: admin
+            password: wnt.QGA0bqu!vxy*qew
+            wan: pppoe0
+    - Plex Campinas:
+        icon: plex.png
+        ping: http://10.0.5.2:32400
+        href: http://10.0.5.2:32400
+        description: Movies & Shows hosted in Campinas
+        widget:
+            type: plex
+            url: http://10.0.5.2:32400
+            key: 4hWLqzKD5_7yyzAik6xf
+    - Transmission:
+        icon: transmission.png
+        ping: http://10.0.5.2:9091
+        href: http://10.0.5.2:9091
+        description: Transmission in Campinas
+        widget:
+            type: transmission
+            url: http://10.0.5.2:9091
+            #username: username
+            #password: password
+            rpcUrl: /transmission/ # Optional. Matches the value of "rpc-url" in your Transmission's settings.json file
+    - Ubuntu Server:
+        icon: ubuntu.png
+        ping: https://10.0.5.2:9090
+        href: https://10.0.5.2:9090
+        description: Ubuntu Server
+        widget:
+            type: glances
+            url: http://10.0.5.2:61208
+            username: glances # optional if auth enabled in Glances
+            password: jdv3osxx # optional if auth enabled in Glances
+            version: 4 # required only if running glances v4 or higher, defaults to 3
+            metric: cpu
+            diskUnits: bytes # optional, bytes (default) or bbytes. Only applies to disk
+            refreshInterval: 10000 # optional - in milliseconds, defaults to 1000 or more, depending on the metric
+            pointsLimit: 15 # optional, defaults to 15
+
+- Other Services:
+    - Tesla:
+        icon: teslamate.png
+        href: http://10.0.0.4:8080
+          #server: my-docker
+          #container: TeslaMate
+        widget:
+            type: customapi
+            url: http://10.0.0.4:8080/api/v1/cars/1/status
+            refreshInterval: 10000
+            method: GET
+            headers:
+            mappings:
+                - field:
+                    data:
+                      status: display_name
+                  label: Name
+                  format: text
+                  color: black
+                - field:
+                    data:
+                      status: state
+                  label: State
+                  format: text
+                - field:
+                    data:
+                      status: odometer
+                  label: Odometer
+                  format: number
+                  suffix: "mi"
+                - field:
+                    data:
+                      charging_details: plugged_in
+                  label: Version
