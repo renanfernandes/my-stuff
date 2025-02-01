@@ -1,63 +1,61 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
-"""Send a pushover notification when the IP changes.
-requires pip install python-pushover"""
-
-from pushover import Client
-import sys
 import requests
 import os
 
-ADDRESS_FILE = '/tmp/old_ip_address.txt'
+# Configuration
+PUSHOVER_USER_KEY = os.getenv('PUSHOVER_USER_KEY')
+PUSHOVER_API_TOKEN = os.getenv('PUSHOVER_API_TOKEN')
+IP_FILE = '/tmp/last_ip.txt'
 
-def notify_ip_change(newIp):
-    Client().send_message("Campinas IP has changed to:" + newIp, title="Public IP Change")
-# [notify_if_change ends]
+def get_external_ip():
+    try:
+        response = requests.get('https://api.ipify.org?format=text')
+        response.raise_for_status()
+        return response.text.strip()
+    except requests.RequestException as e:
+        print(f"Error fetching IP: {e}")
+        return None
 
+def send_pushover_notification(message):
+    if not PUSHOVER_USER_KEY or not PUSHOVER_API_TOKEN:
+        print("Pushover credentials are not set in environment variables.")
+        return
 
-def detect_ip_change():
-    blnDelta = False
-    currIp = requests.get('https://api.ipify.org').text
+    payload = {
+        'token': PUSHOVER_API_TOKEN,
+        'user': PUSHOVER_USER_KEY,
+        'message': message
+    }
+    try:
+        response = requests.post('https://api.pushover.net/1/messages.json', data=payload)
+        response.raise_for_status()
+        print("Notification sent successfully.")
+    except requests.RequestException as e:
+        print(f"Error sending notification: {e}")
 
-    if not os.path.isfile(ADDRESS_FILE):
-        # trigger the script to send email for the first time
-        persist_ip('127.0.0.1')
+def load_last_ip():
+    if os.path.exists(IP_FILE):
+        with open(IP_FILE, 'r') as file:
+            return file.read().strip()
+    return None
 
-    oldIp = read_old_ip()
+def save_current_ip(ip):
+    with open(IP_FILE, 'w') as file:
+        file.write(ip)
 
-    if currIp != oldIp:
-        blnDelta = True
-
-    persist_ip(currIp)
-    return (blnDelta, currIp)
-# [detect_ip_change ends]
-
-
-def persist_ip(ip):
-    f = open(ADDRESS_FILE, 'w')
-    f.write(ip)
-    f.close()
-# [persist_ip ends]
-
-
-def read_old_ip():
-    f = open(ADDRESS_FILE, 'r')
-    oldIp = f.read()
-    f.close()
-    return oldIp
-# [read_old_ip ends]
-
-
-# [START main]
 def main():
-    deltaTuple = detect_ip_change()
-    if deltaTuple[0] is True:
-        notify_ip_change(deltaTuple[1])
-        print("IP changed. Email sent!")
-    else:
-        print("No news is good news.")
-# [END main]
+    current_ip = get_external_ip()
+    if current_ip is None:
+        return
 
+    last_ip = load_last_ip()
+    if current_ip != last_ip:
+        message = f"External IP has changed to: {current_ip}"
+        send_pushover_notification(message)
+        save_current_ip(current_ip)
+    else:
+        print("IP has not changed.")
 
 if __name__ == '__main__':
     main()

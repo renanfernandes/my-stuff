@@ -11,6 +11,7 @@ Table of Contents
      * [Provisioning the VM](#provisioning-the-vm)
      * [Configuring the Syslog Server](#configuring-the-syslog-server)
      * [Creating a Firewall rule to allow incoming traffic to Logstash](#creating-a-firewall-rule-to-allow-incoming-traffic-to-logstash)
+   * [Configuring UDM Pro](#configuring-udm-pro)
    * [Configuring pfSense](#configuring-pfSense)
    * [Configuring Log Analytics Workspace](#configuring-log-analytics-workspace)
    * [Final Step: Sentinel!](#Final-Step-Sentinel)
@@ -187,6 +188,9 @@ On Azure Portal, go to your VM > Networking and add the following Rule:
 
 Be advised that you should also restrict the Source Ip to ensure that only your pfSense is allowed to send logs to logstash. I'm ommiting the IP address here for obvious reasons.
 
+## Configuring UDM Pro
+
+
 ## Configuring pfSense
 The final and last step of this configuration is to allow pfSense to ship the logs to your Syslog server.
 
@@ -213,8 +217,11 @@ Remote Logging Options:
 
 ## Configuring Log Analytics Workspace
 
-Log on Azure Portal and go to `Log Analytics workspace` settings.
-Select `Agents Management` and make a note of your `Workspace ID` and `Primary Key`. If you don't have a Log Analytics Workspace, now is the time to create one!
+Log on Azure Portal and go to `Log Analytics workspace` settings. If you don't have a Log Analytics Workspace created, click on `Create log analytics workspace` button 
+<img src="images/loganalytics1.png" width="800">
+Proceed naming your new workspace and wait for it to be deployed.
+
+On your new new Log Analytics workspace, Select `Agents Management` and make a note of your `Workspace ID` and `Primary Key`. If you don't have a Log Analytics Workspace, now is the time to create one!
 Install the Microsoft Logstash LogAnalytics plugin by using the following command:
 ```
 sudo /usr/share/logstash/bin/logstash-plugin install microsoft-logstash-output-azure-loganalytics
