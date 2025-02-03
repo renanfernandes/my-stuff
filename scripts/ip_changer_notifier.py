@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+"""
+ip_changer_notifier.py: Script to monitor external IP address changes and send notifications via Pushover.
+
+Changelog:
+- 2025-02-02 
+    - Initial version created.
+    - Added timestamped logging for better tracking of events.
+- 2025-02-03: Moved Pushover credentials to environment variables for enhanced security.
+"""
 
 import requests
 import os

@@ -4,6 +4,15 @@ azure_ddns_updater.py: A dynamic DNS updater for Azure DNS.
 
 This script retrieves your current public IP address and updates
 the specified Azure DNS A record if it has changed.
+
+Changelog:
+- 2025-02-03:
+    - Initial version created.
+    - Fixed property name from `arecords` to `a_records` for compatibility with the current Azure SDK.
+    - Added configuration via environment variables for sensitive details (SUBSCRIPTION_ID, RESOURCE_GROUP, DNS_ZONE, RECORD_NAME).
+    - Implemented validation for required environment variables.
+    - Enhanced error handling and logging.
+    - Added log_message() function to include timestamps in log messages.
 """
 
 import sys
@@ -14,7 +23,6 @@ from azure.identity import DefaultAzureCredential
 from azure.mgmt.dns import DnsManagementClient
 from azure.mgmt.dns.models import RecordSet, ARecord
 from azure.core.exceptions import ResourceNotFoundError
-
 
 # Retrieve configuration from environment variables.
 SUBSCRIPTION_ID = os.getenv('SUBSCRIPTION_ID')
