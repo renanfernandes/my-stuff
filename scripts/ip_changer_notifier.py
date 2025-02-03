@@ -2,11 +2,16 @@
 
 import requests
 import os
+from datetime import datetime
 
 # Configuration
 PUSHOVER_USER_KEY = os.getenv('PUSHOVER_USER_KEY')
 PUSHOVER_API_TOKEN = os.getenv('PUSHOVER_API_TOKEN')
-IP_FILE = '/tmp/last_ip.txt'
+IP_FILE = 'last_ip.txt'
+
+def log_message(message):
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    print(f"[{timestamp}] {message}")
 
 def get_external_ip():
     try:
@@ -14,12 +19,12 @@ def get_external_ip():
         response.raise_for_status()
         return response.text.strip()
     except requests.RequestException as e:
-        print(f"Error fetching IP: {e}")
+        log_message(f"Error fetching IP: {e}")
         return None
 
 def send_pushover_notification(message):
     if not PUSHOVER_USER_KEY or not PUSHOVER_API_TOKEN:
-        print("Pushover credentials are not set in environment variables.")
+        log_message("Pushover credentials are not set in environment variables.")
         return
 
     payload = {
@@ -30,9 +35,9 @@ def send_pushover_notification(message):
     try:
         response = requests.post('https://api.pushover.net/1/messages.json', data=payload)
         response.raise_for_status()
-        print("Notification sent successfully.")
+        log_message("Notification sent successfully.")
     except requests.RequestException as e:
-        print(f"Error sending notification: {e}")
+        log_message(f"Error sending notification: {e}")
 
 def load_last_ip():
     if os.path.exists(IP_FILE):
@@ -55,7 +60,7 @@ def main():
         send_pushover_notification(message)
         save_current_ip(current_ip)
     else:
-        print("IP has not changed.")
+        log_message("IP has not changed.")
 
 if __name__ == '__main__':
     main()
