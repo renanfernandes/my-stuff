@@ -8,7 +8,6 @@ A collection of Python automation scripts for various home services and monitori
 This directory contains utility scripts and configurations for automating common tasks including:
 - Dynamic DNS management for Azure
 - IP address change monitoring and notifications
-- Blink camera video management
 - NZBGet download transfers
 - Torrent completion notifications
 - Home Assistant ESPHome configurations
@@ -84,66 +83,6 @@ Can be scheduled via cron job to run periodically:
 ```bash
 */15 * * * * cd /path/to/scripts && python3 ip_changer_notifier.py
 ```
-
----
-
-### 📹 `blink.py`
-**Blink camera video downloader (async version)**
-
-Downloads videos from Blink cameras using the blinkpy library with async support.
-
-**Features:**
-- Async/await based implementation
-- Single aiohttp session for efficiency
-- Handles MFA authentication
-- Creates local save directory automatically
-
-**Requirements:**
-- `blinkpy` package
-- `aiohttp` package
-- Blink account credentials
-
-**Usage:**
-1. Edit the script and add your Blink credentials:
-```python
-USERNAME = "your-email@example.com"
-PASSWORD = "your-password"
-```
-2. Run the script:
-```bash
-python3 blink.py
-```
-
----
-
-### 📹 `download_blink_videos.py`
-**Blink camera video downloader**
-
-Downloads videos from Blink cameras using the blinkpy library.
-
-**Features:**
-- Automatic directory creation
-- Timestamped video naming
-- Video ID tracking
-- Error handling for missing URLs
-
-**Requirements:**
-- `blinkpy` package
-- Blink account credentials
-
-**Usage:**
-1. Edit the script and add your Blink credentials:
-```python
-USERNAME = "your-email@example.com"
-PASSWORD = "your-password"
-REGION = "US"  # or "EU" depending on your region
-```
-2. Run the script:
-```bash
-python3 download_blink_videos.py
-```
-
-Videos will be saved to `blink_videos/` directory with naming format: `TIMESTAMP_VIDEO_ID.mp4`
 
 ---
 
