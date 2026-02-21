@@ -3,24 +3,71 @@
 
 A collection of Python automation scripts for various home services and monitoring tasks.
 
-## Overview
+## Quick Reference
 
-This directory contains utility scripts and configurations for automating common tasks including:
-- Dynamic DNS management for Azure
-- IP address change monitoring and notifications
-- NZBGet download transfers
-- Torrent completion notifications
-- Home Assistant ESPHome configurations
+| Script | Purpose | Setup Time |
+|--------|---------|-----------|
+| `azure_ddns_updater.py` | Dynamic DNS for Azure | ⏱️ 5 min |
+| `ip_changer_notifier.py` | Monitor IP changes | ⏱️ 3 min |
+| `nzbgget_sftp_transfer.py` | Auto-transfer downloads | ⏱️ 10 min |
+| `transmission_checker.py` | Torrent completion alerts | ⏱️ 5 min |
+| `blink.py` / `download_blink_videos.py` | Blink camera downloads | ⏱️ 5 min |
+| `home-assistant/s31.yaml` | Sonoff S31 smart outlet | ⏱️ 15 min |
 
-## Contents
+## Table of Contents
 
-### Python Scripts
-Standalone automation scripts for various home services and monitoring tasks.
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Network & DNS](#network--dns)
+  - [azure_ddns_updater.py](#-azure_ddns_updaterpy)
+  - [ip_changer_notifier.py](#-ip_changer_notifierpy)
+- [Download & Transfer](#download--transfer)
+  - [nzbgget_sftp_transfer.py & SFTPTransfer.py](#-nzbgget_sftp_transferpy--sftptransferpy)
+  - [transmission_checker.py](#-transmission_checkerpy)
+- [Camera & Media](#camera--media)
+  - [blink.py & download_blink_videos.py](#-blinkpy--download_blink_videospy)
+- [Home Automation](#home-automation)
+  - [s31.yaml](#-home-assistants31yaml)
+- [Configuration](#configuration)
+- [Scheduling](#scheduling)
+- [Troubleshooting](#troubleshooting)
+- [Notes](#notes)
 
-### Home Assistant
-Home Assistant integrations and ESPHome device configurations.
+## Prerequisites
 
-## Scripts
+Before running any scripts:
+- **Python 3.6+** installed and in your PATH
+- **pip** package manager available
+- Basic knowledge of environment variables
+- For download scripts: appropriate service accounts (Azure, Blink, etc.)
+- For scheduling: cron access (macOS/Linux) or Task Scheduler (Windows)
+
+## Quick Start
+
+1. **Clone and navigate to scripts:**
+   ```bash
+   git clone https://github.com/renanfernandes/my-stuff.git
+   cd my-stuff/scripts
+   ```
+
+2. **Install all dependencies:**
+   ```bash
+   pip install requests blinkpy aiohttp paramiko pushover transmission-rpc azure-identity azure-mgmt-dns
+   ```
+   Or install selectively based on which scripts you need.
+
+3. **Set environment variables:**
+   ```bash
+   export PUSHOVER_USER_KEY="your-key"
+   export PUSHOVER_API_TOKEN="your-token"
+   ```
+
+4. **Run a test script:**
+   ```bash
+   python3 ip_changer_notifier.py
+   ```
+
+## Network & DNS
 
 ### 🔄 `azure_ddns_updater.py`
 **Dynamic DNS updater for Azure DNS**
@@ -85,6 +132,8 @@ Can be scheduled via cron job to run periodically:
 ```
 
 ---
+
+## Download & Transfer
 
 ### 📦 `nzbgget_sftp_transfer.py` & `SFTPTransfer.py`
 **NZBGet post-processing SFTP transfer script**
@@ -172,7 +221,13 @@ user_key=your-user-key
 
 ---
 
-## Home Assistant
+## Camera & Media
+
+> **Note:** Blink video downloader scripts (`blink.py` and `download_blink_videos.py`) are available in this directory but not yet documented. They use the `blinkpy` library to automatically download videos from Blink cameras.
+
+---
+
+## Home Automation
 
 ### 🏠 `home-assistant/s31.yaml`
 **ESPHome configuration for Sonoff S31 Power Outlet**
@@ -208,16 +263,9 @@ ESPHome configuration for integrating a Sonoff S31 smart power outlet with Home 
 
 ---
 
-## Common Dependencies
+## Configuration
 
-Install common dependencies using pip:
-```bash
-pip install requests blinkpy aiohttp paramiko pushover transmission-rpc azure-identity azure-mgmt-dns
-```
-
-Or install only what you need based on which scripts you're using.
-
-## Environment Variables
+### Environment Variables
 
 For security, sensitive credentials should be set as environment variables rather than hardcoded:
 
@@ -237,7 +285,22 @@ export WINDOWS_SERVER_HOST="..."
 export WINDOWS_SERVER_PORT="22"
 export WINDOWS_SERVER_USERNAME="..."
 export WINDOWS_SERVER_PASSWORD="..."
+
+# Transmission
+export TRANSMISSION_USER="transmission"
+export TRANSMISSION_PASSWORD="transmission"
+export TRANSMISSION_HOST="localhost"
+export TRANSMISSION_PORT="6969"
 ```
+
+### Common Dependencies
+
+Install common dependencies using pip:
+```bash
+pip install requests blinkpy aiohttp paramiko pushover transmission-rpc azure-identity azure-mgmt-dns
+```
+
+Or install only what you need based on which scripts you're using.
 
 ## Scheduling
 
@@ -257,6 +320,41 @@ crontab -e
 # Update Azure DNS hourly
 0 * * * * python3 /path/to/scripts/azure_ddns_updater.py
 ```
+
+## Troubleshooting
+
+### Common Issues
+
+**ImportError: No module named 'requests' / 'paramiko' / etc.**
+- Install missing dependencies: `pip install requests` (or the missing package)
+- Ensure you're using the same Python version for both installation and running scripts
+
+**Permission denied when running script**
+- Make script executable: `chmod +x script_name.py`
+- Check file permissions: `ls -l script_name.py`
+
+**Environment variables not being recognized**
+- Verify they're set: `echo $PUSHOVER_USER_KEY`
+- Make sure you exported them in the same shell session
+- For persistent variables, add to `~/.bashrc` or `~/.zshrc`
+
+**Script timeout or hangs**
+- Check network connectivity (for Azure, Blink, NZBGet scripts)
+- Verify credentials are correct
+- Check if external services are running (Transmission daemon, NZBGet, etc.)
+
+**Cron jobs not running**
+- Check cron is working: `crontab -l`
+- Ensure full paths are used in cron commands
+- Check cron logs: `log stream --predicate 'process == "cron"'` (macOS)
+- Environment variables may not be available in cron - export them in script or use full paths
+
+### Getting Help
+
+- Check individual script documentation in this README
+- Review script source code for inline comments
+- Enable verbose logging if the script supports it
+- Check system logs for error messages
 
 ## Notes
 
