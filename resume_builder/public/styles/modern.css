@@ -1,0 +1,78 @@
+/* Modern — Clean, sans-serif, color accents */
+
+.resume-content {
+  font-family: 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 13.5px;
+  color: #2d2d2d;
+}
+
+.resume-content h1 {
+  font-size: 32px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+}
+
+.resume-content h1 + p {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.resume-content h1 + p + p {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.resume-content hr {
+  height: 3px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  border-radius: 2px;
+}
+
+.resume-content h3 {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #3b82f6;
+}
+
+.resume-content h4 {
+  font-size: 15px;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.resume-content strong {
+  color: #0f172a;
+}
+
+.resume-content em {
+  color: #64748b;
+  font-style: normal;
+  font-weight: 500;
+}
+
+.resume-content a {
+  color: #3b82f6;
+  font-weight: 500;
+}
+
+.resume-content ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.resume-content li {
+  position: relative;
+  padding-left: 18px;
+  font-size: 13px;
+}
+
+.resume-content li::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  color: #3b82f6;
+  font-weight: bold;
+}

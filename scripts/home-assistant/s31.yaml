@@ -1,8 +1,8 @@
 # Basic ESPHome Configuration for the S31 Power Outlet
 
 esphome:
-  name: living-room-bar-outlet
-  friendly_name: Living Room Bar Outlet
+  name: name-of-the-device
+  friendly_name: Friendly Name of the Device
 
 esp8266:
   board: esp01_1m

@@ -11,8 +11,7 @@ A collection of Python automation scripts for various home services and monitori
 | `ip_changer_notifier.py` | Monitor IP changes | ⏱️ 3 min |
 | `nzbgget_sftp_transfer.py` | Auto-transfer downloads | ⏱️ 10 min |
 | `transmission_checker.py` | Torrent completion alerts | ⏱️ 5 min |
-| `blink.py` / `download_blink_videos.py` | Blink camera downloads | ⏱️ 5 min |
-| `home-assistant/s31.yaml` | Sonoff S31 smart outlet | ⏱️ 15 min |
+| `home-assistant/living-room-mirror.yaml` | Sonoff S31 smart outlet | ⏱️ 15 min |
 
 ## Table of Contents
 
@@ -24,10 +23,8 @@ A collection of Python automation scripts for various home services and monitori
 - [Download & Transfer](#download--transfer)
   - [nzbgget_sftp_transfer.py & SFTPTransfer.py](#-nzbgget_sftp_transferpy--sftptransferpy)
   - [transmission_checker.py](#-transmission_checkerpy)
-- [Camera & Media](#camera--media)
-  - [blink.py & download_blink_videos.py](#-blinkpy--download_blink_videospy)
 - [Home Automation](#home-automation)
-  - [s31.yaml](#-home-assistants31yaml)
+  - [living-room-mirror.yaml](#-home-assistantliving-room-mirroryaml)
 - [Configuration](#configuration)
 - [Scheduling](#scheduling)
 - [Troubleshooting](#troubleshooting)
@@ -39,7 +36,7 @@ Before running any scripts:
 - **Python 3.6+** installed and in your PATH
 - **pip** package manager available
 - Basic knowledge of environment variables
-- For download scripts: appropriate service accounts (Azure, Blink, etc.)
+- For download scripts: appropriate service accounts (Azure, etc.)
 - For scheduling: cron access (macOS/Linux) or Task Scheduler (Windows)
 
 ## Quick Start
@@ -52,7 +49,7 @@ Before running any scripts:
 
 2. **Install all dependencies:**
    ```bash
-   pip install requests blinkpy aiohttp paramiko pushover transmission-rpc azure-identity azure-mgmt-dns
+   pip install requests paramiko pushover transmission-rpc azure-identity azure-mgmt-dns
    ```
    Or install selectively based on which scripts you need.
 
@@ -223,7 +220,7 @@ user_key=your-user-key
 
 ## Camera & Media
 
-> **Note:** Blink video downloader scripts (`blink.py` and `download_blink_videos.py`) are available in this directory but not yet documented. They use the `blinkpy` library to automatically download videos from Blink cameras.
+> **Deprecated:** The Blink camera scripts (`blink.py` and `download_blink_videos.py`) have been moved to a dedicated project: [watchman](https://github.com/renanfernandes/watchman).
 
 ---
 
@@ -232,12 +229,14 @@ user_key=your-user-key
 ### 🏠 `home-assistant/s31.yaml`
 **ESPHome configuration for Sonoff S31 Power Outlet**
 
-ESPHome configuration for integrating a Sonoff S31 smart power outlet with Home Assistant.
+ESPHome configuration for integrating a Sonoff S31 smart power outlet with Home Assistant, used to control the living room bar outlet.
 
 **Features:**
 - GPIO relay control (GPIO12)
 - Physical power button support (GPIO0)
 - UART communication at 4800 baud (EVEN parity)
+- CSE7766 power monitoring (current, voltage, power)
+- WiFi signal strength monitoring
 - WiFi connectivity
 - Home Assistant API integration
 - Web server interface
@@ -297,7 +296,7 @@ export TRANSMISSION_PORT="6969"
 
 Install common dependencies using pip:
 ```bash
-pip install requests blinkpy aiohttp paramiko pushover transmission-rpc azure-identity azure-mgmt-dns
+pip install requests paramiko pushover transmission-rpc azure-identity azure-mgmt-dns
 ```
 
 Or install only what you need based on which scripts you're using.

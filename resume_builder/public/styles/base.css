@@ -1,0 +1,74 @@
+/* Base shared styles for all templates */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.resume-container {
+  max-width: 850px;
+  margin: 0 auto;
+  background: #fff;
+}
+
+.resume-content {
+  padding: 48px 56px;
+}
+
+.resume-content h1 {
+  margin-bottom: 4px;
+}
+
+.resume-content h2 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.resume-content h3 {
+  margin-top: 18px;
+  margin-bottom: 8px;
+}
+
+.resume-content h4 {
+  margin-top: 14px;
+  margin-bottom: 4px;
+}
+
+.resume-content p {
+  margin-bottom: 6px;
+  line-height: 1.55;
+}
+
+.resume-content ul {
+  margin-bottom: 8px;
+  padding-left: 22px;
+}
+
+.resume-content li {
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+
+.resume-content hr {
+  border: none;
+  margin: 16px 0;
+}
+
+.resume-content a {
+  text-decoration: none;
+}
+
+.resume-content a:hover {
+  text-decoration: underline;
+}
+
+@media print {
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  .resume-container {
+    box-shadow: none;
+    max-width: 100%;
+  }
+}

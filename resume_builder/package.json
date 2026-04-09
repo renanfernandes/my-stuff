@@ -1,0 +1,17 @@
+{
+  "name": "resume-builder",
+  "version": "1.0.0",
+  "description": "Live resume renderer from Markdown with multiple templates and PDF export",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js --watch"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "marked": "^12.0.0",
+    "chokidar": "^3.6.0",
+    "puppeteer": "^22.0.0",
+    "ws": "^8.16.0"
+  }
+}

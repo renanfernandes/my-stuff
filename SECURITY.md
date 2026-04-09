@@ -1,21 +1,9 @@
 # Security Policy
 
-## Supported Versions
-
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
-
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
-
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+If you discover a security vulnerability in any of the scripts or configurations in this repository, please report it responsibly by [opening a GitHub issue](https://github.com/renanfernandes/my-stuff/issues) or contacting me directly.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+## Disclaimer
+
+This repository contains personal automation scripts and configurations shared as-is. Always review scripts and configurations before running them on your system, and never commit credentials or secrets to version control.

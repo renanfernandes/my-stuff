@@ -10,6 +10,11 @@ Welcome to my public repository. This is a collection of automation scripts, con
 
 Python automation scripts and configurations. See [scripts/README.md](scripts/README.md) for detailed documentation on each script.
 
+### 📄 [resume_builder/](resume_builder/)
+**Live-preview Resume Renderer from Markdown**
+
+Turns a Markdown file into a styled resume with 7+ templates and one-click PDF export. Built with Node.js, Express, and Puppeteer. See [resume_builder/README.md](resume_builder/README.md) for details.
+
 ### 📚 [notebooks/](notebooks/)
 **Jupyter notebooks for data analysis**
 

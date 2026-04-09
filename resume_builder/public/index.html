@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resume Builder</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      min-height: 100vh;
+    }
+
+    /* --- Toolbar --- */
+    .toolbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      height: 60px;
+      background: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.2);
+    }
+
+    .toolbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .toolbar-brand svg {
+      width: 28px;
+      height: 28px;
+      color: #3b82f6;
+    }
+
+    .toolbar-brand h1 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #f8fafc;
+      letter-spacing: -0.3px;
+    }
+
+    .toolbar-brand .file-badge {
+      font-size: 11px;
+      color: #94a3b8;
+      background: #1e293b;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Template selector */
+    .template-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .template-group label {
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    #templateButtons {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .template-btn {
+      padding: 5px 12px;
+      border: 1px solid #334155;
+      background: transparent;
+      color: #94a3b8;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      text-transform: capitalize;
+      white-space: nowrap;
+    }
+
+    .template-btn:hover {
+      border-color: #3b82f6;
+      color: #e2e8f0;
+    }
+
+    .template-btn.active {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: #fff;
+    }
+
+    /* Export button */
+    .btn-export {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-export:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(16,185,129,0.4);
+    }
+
+    .btn-export:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-export svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* --- Main Content --- */
+    .main {
+      padding-top: 84px;
+      padding-bottom: 40px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .resume-container {
+      background: #fff;
+      box-shadow: 0 4px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06);
+      border-radius: 4px;
+      max-width: 850px;
+      width: 100%;
+      min-height: 1100px;
+      transition: opacity 0.15s;
+    }
+
+    /* --- Status indicator --- */
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      display: inline-block;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .status-text {
+      font-size: 11px;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* --- Toast notification --- */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 12px 20px;
+      background: #0f172a;
+      color: #f8fafc;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 200;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="toolbar-brand">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+      </svg>
+      <h1>Resume Builder</h1>
+      <span class="file-badge" id="fileBadge">loading...</span>
+    </div>
+
+    <div class="toolbar-actions">
+      <div class="template-group">
+        <label>Template</label>
+        <div id="templateButtons"></div>
+      </div>
+
+      <div class="status-text">
+        <span class="status-dot"></span>
+        Live
+      </div>
+
+      <button class="btn-export" id="exportBtn" onclick="exportPdf()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+        </svg>
+        Export PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- Resume Preview -->
+  <div class="main">
+    <div class="resume-container" id="resumeContainer">
+      <div class="resume-content" id="resumeContent">
+        <p style="padding: 40px; color: #94a3b8; text-align: center;">Loading resume...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let currentTemplate = 'classic';
+    let templateStyleEl = null;
+    let baseStyleEl = null;
+    let rawHtml = '';
+
+    // Templates that need sidebar layout
+    const SIDEBAR_TEMPLATES = ['sidebar'];
+
+    // --- Init ---
+    async function init() {
+      // Load base styles
+      baseStyleEl = document.createElement('link');
+      baseStyleEl.rel = 'stylesheet';
+      baseStyleEl.href = '/styles/base.css';
+      document.head.appendChild(baseStyleEl);
+
+      // Load templates list (filter out 'base')
+      const templates = await fetch('/api/templates').then(r => r.json());
+      const btnContainer = document.getElementById('templateButtons');
+      const displayOrder = ['classic', 'modern', 'minimal', 'executive', 'sidebar', 'warm', 'latex', 'github'];
+      const sorted = displayOrder.filter(t => templates.includes(t)).concat(templates.filter(t => !displayOrder.includes(t) && t !== 'base'));
+
+      sorted.forEach(name => {
+        const btn = document.createElement('button');
+        btn.className = 'template-btn' + (name === currentTemplate ? ' active' : '');
+        btn.textContent = name;
+        btn.onclick = () => switchTemplate(name);
+        btnContainer.appendChild(btn);
+      });
+
+      // Load template CSS
+      loadTemplateCSS(currentTemplate);
+
+      // Fetch resume
+      const data = await fetch('/api/resume').then(r => r.json());
+      rawHtml = data.html;
+      applyLayout();
+      document.getElementById('fileBadge').textContent = data.file;
+
+      // WebSocket for live reload
+      connectWS();
+    }
+
+    function loadTemplateCSS(name) {
+      if (templateStyleEl) templateStyleEl.remove();
+      templateStyleEl = document.createElement('link');
+      templateStyleEl.rel = 'stylesheet';
+      templateStyleEl.href = `/styles/${name}.css`;
+      document.head.appendChild(templateStyleEl);
+    }
+
+    // Build the sidebar layout by extracting h1, subtitle, contact from the HTML
+    function buildSidebarLayout(html) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString('<div>' + html + '</div>', 'text/html');
+      const root = doc.body.firstChild;
+
+      // Extract name from h1
+      const h1 = root.querySelector('h1');
+      const name = h1 ? h1.textContent : '';
+
+      // Extract subtitle and contact lines (paragraphs right after h1)
+      let subtitle = '';
+      let contactLines = [];
+      let linksHtml = '';
+      if (h1) {
+        let sibling = h1.nextElementSibling;
+        let idx = 0;
+        while (sibling && sibling.tagName === 'P' && idx < 3) {
+          if (idx === 0) {
+            subtitle = sibling.textContent;
+          } else if (idx === 1) {
+            contactLines = sibling.textContent.split('|').map(s => s.trim());
+          } else if (idx === 2) {
+            linksHtml = sibling.innerHTML;
+          }
+          idx++;
+          sibling = sibling.nextElementSibling;
+        }
+      }
+
+      // Name can be split for large display
+      const nameParts = name.split(' ');
+      const sidebarNameHtml = nameParts.map(p => `<div>${p}</div>`).join('');
+
+      const sidebar = `
+        <div class="resume-sidebar">
+          <div class="sidebar-name">${sidebarNameHtml}</div>
+          <div class="sidebar-title">${subtitle}</div>
+          ${linksHtml ? `<div style="margin-bottom:auto;font-size:12px">${linksHtml}</div>` : ''}
+          <div class="sidebar-section-label">Contact</div>
+          ${contactLines.map(c => `<div class="sidebar-contact-item">${c}</div>`).join('')}
+        </div>`;
+
+      return sidebar + `<div class="resume-main">${html}</div>`;
+    }
+
+    function applyLayout() {
+      const el = document.getElementById('resumeContent');
+      if (SIDEBAR_TEMPLATES.includes(currentTemplate)) {
+        el.innerHTML = buildSidebarLayout(rawHtml);
+      } else {
+        el.innerHTML = rawHtml;
+      }
+    }
+
+    function switchTemplate(name) {
+      currentTemplate = name;
+      loadTemplateCSS(name);
+      applyLayout();
+      document.querySelectorAll('.template-btn').forEach(b => {
+        b.classList.toggle('active', b.textContent === name);
+      });
+      showToast(`Switched to "${name}" template`);
+    }
+
+    // --- WebSocket live reload ---
+    function connectWS() {
+      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const ws = new WebSocket(`${protocol}//${location.host}`);
+
+      ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        if (msg.type === 'update') {
+          rawHtml = msg.html;
+          applyLayout();
+          showToast('Resume updated');
+        }
+      };
+
+      ws.onclose = () => {
+        setTimeout(connectWS, 2000);
+      };
+    }
+
+    // --- PDF Export ---
+    async function exportPdf() {
+      const btn = document.getElementById('exportBtn');
+      btn.disabled = true;
+      btn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:16px;height:16px;animation:spin 1s linear infinite">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+        </svg>
+        Generating...`;
+
+      try {
+        const res = await fetch(`/api/export-pdf?template=${currentTemplate}`);
+        if (!res.ok) throw new Error('Export failed');
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'resume.pdf';
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('PDF downloaded!');
+      } catch (err) {
+        showToast('PDF export failed: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:16px;height:16px">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+          </svg>
+          Export PDF`;
+      }
+    }
+
+    // --- Toast ---
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // --- Spin animation ---
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
+    document.head.appendChild(styleSheet);
+
+    init();
+  </script>
+</body>
+</html>
