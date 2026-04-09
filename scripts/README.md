@@ -11,7 +11,7 @@ A collection of Python automation scripts for various home services and monitori
 | `ip_changer_notifier.py` | Monitor IP changes | ⏱️ 3 min |
 | `nzbgget_sftp_transfer.py` | Auto-transfer downloads | ⏱️ 10 min |
 | `transmission_checker.py` | Torrent completion alerts | ⏱️ 5 min |
-| `home-assistant/living-room-mirror.yaml` | Sonoff S31 smart outlet | ⏱️ 15 min |
+| `s31.yaml` | Sonoff S31 smart outlet | ⏱️ 15 min |
 
 ## Table of Contents
 
