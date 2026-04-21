@@ -1,0 +1,6 @@
+# Azure DDNS Updater Configuration
+subscription_id: "your-subscription-id"
+resource_group: "your-resource-group"
+dns_zone: "example.com"
+record_name: "@"
+ttl: 300

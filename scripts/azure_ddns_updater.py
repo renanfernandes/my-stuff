@@ -13,10 +13,13 @@ Changelog:
     - Implemented validation for required environment variables.
     - Enhanced error handling and logging.
     - Added log_message() function to include timestamps in log messages.
+- 2026-04-21:
+    - Replaced environment variables with YAML config file (azure_ddns_updater_config.yaml).
 """
 
 import sys
 import os
+import yaml
 import requests
 from datetime import datetime
 from azure.identity import DefaultAzureCredential
@@ -24,24 +27,36 @@ from azure.mgmt.dns import DnsManagementClient
 from azure.mgmt.dns.models import RecordSet, ARecord
 from azure.core.exceptions import ResourceNotFoundError
 
-# Retrieve configuration from environment variables.
-SUBSCRIPTION_ID = os.getenv('SUBSCRIPTION_ID')
-RESOURCE_GROUP = os.getenv('RESOURCE_GROUP')
-DNS_ZONE = os.getenv('DNS_ZONE')
-RECORD_NAME = os.getenv('RECORD_NAME')
-TTL = 300  # Time-to-live in seconds
+# Load configuration from YAML file.
+CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "azure_ddns_updater_config.yaml")
 
-# Validate that all required environment variables are set.
+try:
+    with open(CONFIG_PATH, "r") as f:
+        config = yaml.safe_load(f)
+except FileNotFoundError:
+    print(f"Error: Config file not found at {CONFIG_PATH}")
+    sys.exit(1)
+except yaml.YAMLError as e:
+    print(f"Error: Failed to parse config file: {e}")
+    sys.exit(1)
+
+SUBSCRIPTION_ID = config.get('subscription_id')
+RESOURCE_GROUP = config.get('resource_group')
+DNS_ZONE = config.get('dns_zone')
+RECORD_NAME = config.get('record_name')
+TTL = config.get('ttl', 300)
+
+# Validate that all required config values are set.
 required_vars = {
-    'SUBSCRIPTION_ID': SUBSCRIPTION_ID,
-    'RESOURCE_GROUP': RESOURCE_GROUP,
-    'DNS_ZONE': DNS_ZONE,
-    'RECORD_NAME': RECORD_NAME,
+    'subscription_id': SUBSCRIPTION_ID,
+    'resource_group': RESOURCE_GROUP,
+    'dns_zone': DNS_ZONE,
+    'record_name': RECORD_NAME,
 }
 
 for var_name, value in required_vars.items():
-    if value is None:
-        print(f"Error: The environment variable {var_name} is not set.")
+    if not value:
+        print(f"Error: '{var_name}' is missing or empty in {CONFIG_PATH}")
         sys.exit(1)
 
 def log_message(message):
