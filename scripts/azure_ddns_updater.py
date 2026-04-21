@@ -15,6 +15,7 @@ Changelog:
     - Added log_message() function to include timestamps in log messages.
 - 2026-04-21:
     - Replaced environment variables with YAML config file (azure_ddns_updater_config.yaml).
+    - Added Service Principal authentication via config (azure_tenant_id, azure_client_id, azure_client_secret).
 """
 
 import sys
@@ -22,7 +23,7 @@ import os
 import yaml
 import requests
 from datetime import datetime
-from azure.identity import DefaultAzureCredential
+from azure.identity import ClientSecretCredential
 from azure.mgmt.dns import DnsManagementClient
 from azure.mgmt.dns.models import RecordSet, ARecord
 from azure.core.exceptions import ResourceNotFoundError
@@ -45,6 +46,9 @@ RESOURCE_GROUP = config.get('resource_group')
 DNS_ZONE = config.get('dns_zone')
 RECORD_NAME = config.get('record_name')
 TTL = config.get('ttl', 300)
+AZURE_TENANT_ID = config.get('azure_tenant_id')
+AZURE_CLIENT_ID = config.get('azure_client_id')
+AZURE_CLIENT_SECRET = config.get('azure_client_secret')
 
 # Validate that all required config values are set.
 required_vars = {
@@ -52,6 +56,9 @@ required_vars = {
     'resource_group': RESOURCE_GROUP,
     'dns_zone': DNS_ZONE,
     'record_name': RECORD_NAME,
+    'azure_tenant_id': AZURE_TENANT_ID,
+    'azure_client_id': AZURE_CLIENT_ID,
+    'azure_client_secret': AZURE_CLIENT_SECRET,
 }
 
 for var_name, value in required_vars.items():
@@ -83,9 +90,13 @@ def main():
 
     # Step 2. Create Azure credentials and a DNS management client.
     try:
-        credential = DefaultAzureCredential()
+        credential = ClientSecretCredential(
+            tenant_id=AZURE_TENANT_ID,
+            client_id=AZURE_CLIENT_ID,
+            client_secret=AZURE_CLIENT_SECRET,
+        )
     except Exception as e:
-        log_message(f"Error creating default credentials: {e}")
+        log_message(f"Error creating credentials: {e}")
         sys.exit(1)
 
     dns_client = DnsManagementClient(credential, SUBSCRIPTION_ID)

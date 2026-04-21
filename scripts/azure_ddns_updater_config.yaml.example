@@ -1,0 +1,11 @@
+# Azure DDNS Updater Configuration
+subscription_id: "your-subscription-id"
+resource_group: "your-resource-group"
+dns_zone: "example.com"
+record_name: "@"
+ttl: 300
+
+# Azure Service Principal credentials
+azure_tenant_id: "your-tenant-id"
+azure_client_id: "your-client-id"
+azure_client_secret: "your-client-secret"
