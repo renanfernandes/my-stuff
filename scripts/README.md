@@ -76,23 +76,50 @@ Updates Azure DNS A records with your current public IP address when it changes.
 - Compares with existing Azure DNS record
 - Updates record only if IP has changed
 - Timestamped logging
-- Environment variable configuration for security
+- YAML config file for all settings and credentials
 
 **Requirements:**
 - Azure SDK: `azure-identity`, `azure-mgmt-dns`
-- Environment variables:
-  - `SUBSCRIPTION_ID`: Azure subscription ID
-  - `RESOURCE_GROUP`: Azure resource group name
-  - `DNS_ZONE`: Azure DNS zone name
-  - `RECORD_NAME`: DNS record name to update
+- `pyyaml` package
+- Config file: `azure_ddns_updater_config.yaml` (next to the script)
+
+**Setup:**
+
+1. **Create a Service Principal** with DNS access:
+   ```bash
+   az login
+   az ad sp create-for-rbac --name "ddns-updater" --role "DNS Zone Contributor" \
+     --scopes /subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RESOURCE_GROUP>/providers/Microsoft.Network/dnszones/<DNS_ZONE>
+   ```
+   Save the output — you'll need `appId`, `password`, and `tenant`.
+
+2. **Create the config file** by copying the example:
+   ```bash
+   cp azure_ddns_updater_config.yaml.example azure_ddns_updater_config.yaml
+   ```
+
+3. **Fill in your values** in `azure_ddns_updater_config.yaml`:
+   ```yaml
+   subscription_id: "your-subscription-id"
+   resource_group: "your-resource-group"
+   dns_zone: "example.com"
+   record_name: "subdomain"
+   ttl: 300
+   azure_tenant_id: "tenant from step 1"
+   azure_client_id: "appId from step 1"
+   azure_client_secret: "password from step 1"
+   ```
+
+> **Note:** The azure_ddns_updater_config.yaml.example is an example you can use.
 
 **Usage:**
 ```bash
-export SUBSCRIPTION_ID="your-subscription-id"
-export RESOURCE_GROUP="your-resource-group"
-export DNS_ZONE="your-zone.com"
-export RECORD_NAME="subdomain"
 python3 azure_ddns_updater.py
+```
+
+**Scheduling (cron):**
+```bash
+0 * * * * /usr/bin/env python3 /path/to/azure_ddns_updater.py >> /tmp/azure_ddns_updater.log 2>&1
 ```
 
 ---
@@ -109,23 +136,33 @@ Monitors your external IP address and sends notifications when changes occur.
 - Timestamped logging
 
 **Requirements:**
-- `requests` package
+- `requests`, `pyyaml` packages
 - Pushover account with API token
-- Environment variables:
-  - `PUSHOVER_USER_KEY`: Your Pushover user key
-  - `PUSHOVER_API_TOKEN`: Your Pushover API token
+- Config file: `ip_changer_notifier_config.yaml` (next to the script)
+
+**Setup:**
+
+1. **Copy the example config:**
+   ```bash
+   cp ip_changer_notifier_config.yaml.example ip_changer_notifier_config.yaml
+   ```
+
+2. **Fill in your values** in `ip_changer_notifier_config.yaml`:
+   ```yaml
+   pushover_user_key: "your-pushover-user-key"
+   pushover_api_token: "your-pushover-api-token"
+   ```
+
+> **Note:** The ip_changer_notifier_config.yaml.example is an example you can use.
 
 **Usage:**
 ```bash
-export PUSHOVER_USER_KEY="your-user-key"
-export PUSHOVER_API_TOKEN="your-api-token"
 python3 ip_changer_notifier.py
 ```
 
-**Configuration:**
-Can be scheduled via cron job to run periodically:
+**Scheduling (cron):**
 ```bash
-*/15 * * * * cd /path/to/scripts && python3 ip_changer_notifier.py
+*/15 * * * * /usr/bin/env python3 /path/to/ip_changer_notifier.py >> /tmp/ip_changer_notifier.log 2>&1
 ```
 
 ---

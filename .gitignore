@@ -1,2 +1,3 @@
 # Config files with secrets
 scripts/azure_ddns_updater_config.yaml
+scripts/ip_changer_notifier_config.yaml
