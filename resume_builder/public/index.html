@@ -209,6 +209,169 @@
       transform: translateY(0);
       opacity: 1;
     }
+
+    /* --- Mode toggle --- */
+    .mode-toggle {
+      display: flex;
+      background: #1e293b;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid #334155;
+    }
+
+    .mode-toggle button {
+      padding: 5px 14px;
+      border: none;
+      background: transparent;
+      color: #94a3b8;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .mode-toggle button:hover {
+      color: #e2e8f0;
+    }
+
+    .mode-toggle button.active {
+      background: #3b82f6;
+      color: #fff;
+    }
+
+    .mode-toggle button svg {
+      width: 13px;
+      height: 13px;
+    }
+
+    /* --- Editor view --- */
+    .editor-view {
+      padding-top: 84px;
+      padding-bottom: 40px;
+      display: none;
+      justify-content: center;
+    }
+
+    .editor-view.active {
+      display: flex;
+    }
+
+    .editor-wrapper {
+      max-width: 850px;
+      width: 100%;
+      background: #1e293b;
+      border-radius: 8px;
+      box-shadow: 0 4px 40px rgba(0,0,0,0.12);
+      overflow: hidden;
+    }
+
+    .editor-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: #0f172a;
+      border-bottom: 1px solid #334155;
+    }
+
+    .editor-header span {
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 500;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .editor-header .unsaved {
+      font-size: 10px;
+      color: #f59e0b;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .editor-header .unsaved.show {
+      opacity: 1;
+    }
+
+    .editor-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .editor-actions button {
+      padding: 4px 12px;
+      border: 1px solid #334155;
+      background: transparent;
+      color: #94a3b8;
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .editor-actions button:hover {
+      border-color: #64748b;
+      color: #e2e8f0;
+    }
+
+    .editor-actions button.btn-save {
+      border-color: #22c55e40;
+      color: #4ade80;
+    }
+
+    .editor-actions button.btn-save:hover {
+      background: #22c55e15;
+      border-color: #22c55e;
+    }
+
+    .editor-actions button.btn-revert:hover {
+      border-color: #f59e0b;
+      color: #fbbf24;
+    }
+
+    .editor-actions button svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    #mdEditor {
+      width: 100%;
+      min-height: 800px;
+      background: #1e293b;
+      color: #e2e8f0;
+      border: none;
+      padding: 24px;
+      font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      resize: vertical;
+      outline: none;
+      tab-size: 2;
+    }
+
+    #mdEditor::placeholder {
+      color: #475569;
+    }
+
+    .main.active {
+      display: flex;
+    }
+
+    .main {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -229,6 +392,17 @@
         <div id="templateButtons"></div>
       </div>
 
+      <div class="mode-toggle">
+        <button id="modePreview" class="active" onclick="setMode('preview')">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+          Preview
+        </button>
+        <button id="modeEdit" onclick="setMode('edit')">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Z" /></svg>
+          Edit
+        </button>
+      </div>
+
       <div class="status-text">
         <span class="status-dot"></span>
         Live
@@ -243,8 +417,31 @@
     </div>
   </div>
 
+  <!-- Editor View -->
+  <div class="editor-view" id="editorView">
+    <div class="editor-wrapper">
+      <div class="editor-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span id="editorFileName">resume.md</span>
+          <span class="unsaved" id="unsavedBadge">Modified</span>
+        </div>
+        <div class="editor-actions">
+          <button class="btn-revert" onclick="revertEditor()" title="Revert to last saved version">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>
+            Revert
+          </button>
+          <button class="btn-save" onclick="saveToServer()" title="Save to disk (Cmd+S)">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3.75H6.912a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H15M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859M12 3v8.25m0 0-3-3m3 3 3-3" /></svg>
+            Save
+          </button>
+        </div>
+      </div>
+      <textarea id="mdEditor" placeholder="# Your Name\n**Your Title**\n\nStart writing your resume in Markdown..."></textarea>
+    </div>
+  </div>
+
   <!-- Resume Preview -->
-  <div class="main">
+  <div class="main active" id="previewView">
     <div class="resume-container" id="resumeContainer">
       <div class="resume-content" id="resumeContent">
         <p style="padding: 40px; color: #94a3b8; text-align: center;">Loading resume...</p>
@@ -255,11 +452,15 @@
   <!-- Toast -->
   <div class="toast" id="toast"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
     let currentTemplate = 'classic';
     let templateStyleEl = null;
     let baseStyleEl = null;
     let rawHtml = '';
+    let rawMd = '';
+    let currentMode = 'preview';
+    let editorDirty = false;
 
     // Templates that need sidebar layout
     const SIDEBAR_TEMPLATES = ['sidebar'];
@@ -289,11 +490,36 @@
       // Load template CSS
       loadTemplateCSS(currentTemplate);
 
-      // Fetch resume
+      // Fetch resume markdown and HTML
       const data = await fetch('/api/resume').then(r => r.json());
       rawHtml = data.html;
       applyLayout();
       document.getElementById('fileBadge').textContent = data.file;
+      document.getElementById('editorFileName').textContent = data.file;
+
+      // Fetch raw markdown for the editor
+      try {
+        const mdData = await fetch('/api/resume-raw').then(r => r.json());
+        rawMd = mdData.markdown;
+        document.getElementById('mdEditor').value = rawMd;
+      } catch(e) {}
+
+      // Editor input handler — re-render preview on each keystroke
+      document.getElementById('mdEditor').addEventListener('input', (e) => {
+        rawMd = e.target.value;
+        rawHtml = marked.parse(rawMd);
+        applyLayout();
+        editorDirty = true;
+        document.getElementById('unsavedBadge').classList.add('show');
+      });
+
+      // Ctrl/Cmd+S to save from editor
+      document.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+          e.preventDefault();
+          saveToServer();
+        }
+      });
 
       // WebSocket for live reload
       connectWS();
@@ -369,7 +595,57 @@
       document.querySelectorAll('.template-btn').forEach(b => {
         b.classList.toggle('active', b.textContent === name);
       });
+      // Auto-switch to preview when selecting a template
+      if (currentMode === 'edit') setMode('preview');
       showToast(`Switched to "${name}" template`);
+    }
+
+    // --- Mode toggle (Edit / Preview) ---
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById('modePreview').classList.toggle('active', mode === 'preview');
+      document.getElementById('modeEdit').classList.toggle('active', mode === 'edit');
+      document.getElementById('previewView').classList.toggle('active', mode === 'preview');
+      document.getElementById('editorView').classList.toggle('active', mode === 'edit');
+
+      // When switching to preview, re-render from the editor content
+      if (mode === 'preview') {
+        rawHtml = marked.parse(rawMd);
+        applyLayout();
+      }
+    }
+
+    // --- Save editor content back to server ---
+    async function saveToServer() {
+      try {
+        const res = await fetch('/api/resume', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ markdown: rawMd })
+        });
+        if (!res.ok) throw new Error('Save failed');
+        editorDirty = false;
+        document.getElementById('unsavedBadge').classList.remove('show');
+        showToast('Saved to disk');
+      } catch(err) {
+        showToast('Save failed: ' + err.message);
+      }
+    }
+
+    // Revert editor content to last saved version from disk
+    async function revertEditor() {
+      try {
+        const data = await fetch('/api/resume-raw').then(r => r.json());
+        rawMd = data.markdown;
+        document.getElementById('mdEditor').value = rawMd;
+        rawHtml = marked.parse(rawMd);
+        applyLayout();
+        editorDirty = false;
+        document.getElementById('unsavedBadge').classList.remove('show');
+        showToast('Reverted to saved version');
+      } catch(err) {
+        showToast('Revert failed: ' + err.message);
+      }
     }
 
     // --- WebSocket live reload ---

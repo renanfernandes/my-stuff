@@ -1,0 +1,80 @@
+# LED Matrix Display — Configuration
+# Copy this file to led_matrix_display_config.yaml and edit as needed.
+#
+# Usage:
+#   python led_matrix_display.py image photo.png
+#   python led_matrix_display.py slideshow ~/Pictures/ --interval 8
+#   python led_matrix_display.py spotify
+
+matrix:
+  # ── Physical panel dimensions ──────────────────────────────────────────────
+  rows: 64            # Height of your panel
+  cols: 64            # Width of your panel
+  chain_length: 1     # Number of panels daisy-chained together
+  parallel: 1         # Parallel chains (1 for the Bonnet)
+
+  # ── Adafruit RGB Matrix Bonnet hardware mapping ────────────────────────────
+  # adafruit-hat      → standard (no hardware modifications needed)
+  # adafruit-hat-pwm  → better colour quality (requires soldering a jumper on the Bonnet)
+  hardware_mapping: adafruit-hat
+
+  # ── GPIO slowdown — tune to your Raspberry Pi model ───────────────────────
+  # Raspberry Pi 5         → 4
+  # Raspberry Pi 4         → 4
+  # Raspberry Pi 3 / Zero 2→ 2
+  # Raspberry Pi Zero      → 1
+  gpio_slowdown: 4
+
+  # ── Quality / brightness ───────────────────────────────────────────────────
+  brightness: 80              # 0–100 (values above 80 draw significant current)
+  pwm_lsb_nanoseconds: 130    # Lower = better quality, more CPU usage
+  show_refresh_rate: false    # Print refresh rate to stdout (debug)
+  disable_hardware_pulsing: false  # Set true if you see flicker on Pi 4
+
+
+display:
+  # ── Image fitting ──────────────────────────────────────────────────────────
+  # fit     — keep aspect ratio, pad remainder with background colour  ← recommended
+  # fill    — keep aspect ratio, crop centre excess (no padding)
+  # stretch — stretch to exact 64×64 (may distort non-square images)
+  # center  — centre without upscaling; scale down only if too large
+  fit_mode: fit
+
+  # Padding / background colour [R, G, B] used by 'fit' and 'center' modes
+  background: [0, 0, 0]
+
+  # ── Slideshow ──────────────────────────────────────────────────────────────
+  slideshow_interval: 10    # Seconds to display each image
+  loop: true                # Restart from the beginning when the last image is shown
+  shuffle: false            # Randomise image order each pass
+
+
+spotify:
+  # ── Spotify album art ──────────────────────────────────────────────────────
+  # 1. Go to https://developer.spotify.com/dashboard and create an app.
+  # 2. Add http://localhost:8888/callback as a Redirect URI in the app settings.
+  # 3. Paste your Client ID and Client Secret below.
+  # 4. Run:  python led_matrix_display.py spotify
+  #    A browser window will open once for you to authorise access.
+  #    The token is cached in cache_path for subsequent runs.
+  client_id: "your_client_id_here"
+  client_secret: "your_client_secret_here"
+  redirect_uri: "http://localhost:8888/callback"
+
+  poll_interval: 5          # Seconds between "what's playing?" API polls
+
+  # ── Named accounts ─────────────────────────────────────────────────────────
+  # Each account stores its own OAuth token so you can switch users without
+  # re-authenticating.  Add as many accounts as you need.
+  #
+  # Usage:
+  #   python led_matrix_display.py spotify                   # uses default_account
+  #   python led_matrix_display.py spotify --account wife    # uses wife's account
+  #
+  # First run for each account will prompt you to authorise via browser.
+  default_account: "renan"
+  accounts:
+    renan:
+      cache_path: ".spotify_token_renan"
+    wife:
+      cache_path: ".spotify_token_wife"

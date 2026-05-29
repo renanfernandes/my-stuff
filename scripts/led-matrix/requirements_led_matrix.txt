@@ -1,0 +1,24 @@
+# LED Matrix Display — Python dependencies
+#
+# Install core dependencies:
+#   pip install -r requirements_led_matrix.txt
+#
+# ── Hardware driver (Raspberry Pi only) ───────────────────────────────────────
+# rpi-rgb-led-matrix must be built from source — it is NOT on PyPI.
+# Follow the official guide:
+#   https://github.com/hzeller/rpi-rgb-led-matrix
+#
+# Quick install on Raspberry Pi:
+#   sudo apt install python3-tk python3-pil.imagetk   # for --simulate / preview window
+#   git clone https://github.com/hzeller/rpi-rgb-led-matrix.git
+#   cd rpi-rgb-led-matrix
+#   make build-python PYTHON=$(which python3)
+#   sudo make install-python PYTHON=$(which python3)
+
+# ── Core ───────────────────────────────────────────────────────────────────────
+Pillow>=9.0
+PyYAML>=6.0
+
+# ── Spotify album art (optional) ───────────────────────────────────────────────
+spotipy>=2.23.0
+requests>=2.28.0

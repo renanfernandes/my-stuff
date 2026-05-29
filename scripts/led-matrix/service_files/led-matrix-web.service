@@ -1,0 +1,20 @@
+[Unit]
+Description=LED Matrix Web Controller
+After=network.target
+
+[Service]
+Type=simple
+User=renanfernandes
+Group=renanfernandes
+WorkingDirectory=/home/renanfernandes/led_matrix
+ExecStart=/usr/bin/python3 /home/renanfernandes/led_matrix/led_matrix_web.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+# Grant realtime scheduling (needed by rpi-rgb-led-matrix) without full root
+AmbientCapabilities=CAP_SYS_NICE
+CapabilityBoundingSet=CAP_SYS_NICE
+
+[Install]
+WantedBy=multi-user.target

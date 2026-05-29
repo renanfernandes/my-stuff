@@ -47,6 +47,30 @@ app.get('/api/resume', (req, res) => {
   }
 });
 
+// Returns the raw markdown content for the in-browser editor
+app.get('/api/resume-raw', (req, res) => {
+  try {
+    const md = fs.readFileSync(mdFilePath, 'utf-8');
+    res.json({ markdown: md, file: path.basename(mdFilePath) });
+  } catch (err) {
+    res.status(500).json({ error: `Could not read ${mdFilePath}: ${err.message}` });
+  }
+});
+
+// Saves edited markdown from the in-browser editor back to disk
+app.put('/api/resume', (req, res) => {
+  try {
+    const md = req.body.markdown;
+    if (typeof md !== 'string') {
+      return res.status(400).json({ error: 'Missing markdown field' });
+    }
+    fs.writeFileSync(mdFilePath, md, 'utf-8');
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: `Could not save: ${err.message}` });
+  }
+});
+
 // Generates a PDF of the resume using Puppeteer.
 // Query param `template` selects which CSS template to apply.
 // The sidebar template requires a client-side DOM transformation script

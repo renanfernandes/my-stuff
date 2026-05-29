@@ -1,0 +1,15 @@
+# LED Matrix Web Controller — Python dependencies
+# Install with:
+#   pip3 install -r requirements_led_matrix_web.txt
+#
+# Also required via apt (NOT pip):
+#   sudo apt-get install python3-tk python3-pil.imagetk
+#
+# rpi-rgb-led-matrix must be built from source on the Pi:
+#   https://github.com/hzeller/rpi-rgb-led-matrix
+
+Flask>=2.3.0
+Pillow>=9.0
+PyYAML>=6.0
+spotipy>=2.23.0
+requests>=2.28.0
