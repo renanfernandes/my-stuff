@@ -373,7 +373,6 @@ class MatrixDisplay:
         sys.exit(0)
 
 
-# ── Shared helper ──────────────────────────────────────────────────────────────
 
 def _fit(img: Image.Image, display: MatrixDisplay, cfg: dict) -> Image.Image:
     d = cfg['display']
@@ -663,7 +662,7 @@ class SpotifyPoller:
         - the same track as last poll is still playing.
         """
         try:
-            result = self.sp.currently_playing()
+            result = self.sp.currently_playing(additional_types='track,episode')
         except Exception as exc:
             log.warning("Spotify API error: %s", exc)
             return None
@@ -680,7 +679,7 @@ class SpotifyPoller:
         if track_id == self._last_id:
             return None  # Same track — nothing to update
 
-        artists = ', '.join(a['name'] for a in item.get('artists', []))
+        artists = ', '.join(a['name'] for a in item.get('artists', [])) or item.get('show', {}).get('name', '')
         log.info("Now playing: %s — %s", item.get('name', '?'), artists)
 
         url = self._pick_art_url(item)
@@ -770,7 +769,7 @@ def mode_spotify(display: MatrixDisplay, cfg: dict, account: Optional[str] = Non
                 any_changed = True
             # A poller is "playing" if it changed recently or still has art
             try:
-                result = poller.sp.currently_playing()
+                result = poller.sp.currently_playing(additional_types='track,episode')
                 if result and result.get('is_playing'):
                     any_playing = True
             except Exception:
