@@ -8,10 +8,10 @@
     "dev": "node server.js --watch"
   },
   "dependencies": {
-    "express": "^4.18.2",
+    "express": "^4.22.2",
     "marked": "^12.0.0",
     "chokidar": "^3.6.0",
     "puppeteer": "^22.0.0",
-    "ws": "^8.16.0"
+    "ws": "^8.21.0"
   }
 }
