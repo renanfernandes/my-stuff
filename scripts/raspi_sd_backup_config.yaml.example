@@ -1,0 +1,38 @@
+# Where backups will be stored on this Mac.
+# For iCloud Drive on macOS, this path is usually:
+# ~/Library/Mobile Documents/com~apple~CloudDocs/<folder>
+backup_root: "~/Library/Mobile Documents/com~apple~CloudDocs/raspi-backups"
+
+# How many monthly images to keep per host.
+retention_count: 6
+
+# gzip level from 1 (fast, larger file) to 9 (slower, smaller file).
+gzip_level: 1
+
+# Optional Pushover notifications.
+pushover:
+  enabled: false
+  user_key: "your-pushover-user-key"
+  api_token: "your-pushover-api-token"
+
+# Optional global SSH defaults (can be overridden per host).
+ssh_user: "pi"
+ssh_port: 22
+strict_host_key_checking: true
+# ssh_options:
+#   - "ConnectTimeout=20"
+#   - "ServerAliveInterval=30"
+
+hosts:
+  - name: "campinas-pi"
+    host: "campinas-pi.local"
+    enabled: true
+    source_device: "/dev/mmcblk0"
+    # Optional host-specific overrides:
+    # ssh_user: "pi"
+    # ssh_port: 22
+
+  - name: "decatur-pi"
+    host: "decatur-pi.local"
+    enabled: true
+    source_device: "/dev/mmcblk0"

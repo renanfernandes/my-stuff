@@ -26,6 +26,7 @@ import io
 import logging
 import os
 import random
+import re as _re
 import signal
 import sys
 import time
@@ -68,6 +69,35 @@ except ImportError:
 
 log = logging.getLogger(__name__)
 
+
+class _SpotifyRateLimitCapture(logging.Filter):
+    """Capture Spotify's own retry delay from its rate-limit warning."""
+
+    retry_after: float = 0.0
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        msg = record.getMessage()
+        m = _re.search(r'Retry will occur after:\s*(\d+)', msg, _re.I)
+        if m:
+            _SpotifyRateLimitCapture.retry_after = float(m.group(1))
+        return True
+
+
+_spotipy_rate_filter = _SpotifyRateLimitCapture()
+for name in (
+    '',
+    'spotipy',
+    'requests',
+    'requests.packages',
+    'requests.packages.urllib3',
+    'requests.packages.urllib3.util',
+    'requests.packages.urllib3.util.retry',
+    'urllib3',
+    'urllib3.util',
+    'urllib3.util.retry',
+):
+    logging.getLogger(name).addFilter(_spotipy_rate_filter)
+
 IMAGE_EXTENSIONS = frozenset({'.png', '.jpg', '.jpeg', '.bmp', '.gif', '.webp', '.tiff'})
 
 # ── Default configuration ──────────────────────────────────────────────────────
@@ -79,8 +109,8 @@ DEFAULT_CONFIG: dict = {
         'chain_length': 1,
         'parallel': 1,
         # Hardware mapping for the Bonnet.
-        # Use 'adafruit-hat-pwm' for better quality (requires soldering a jumper).
-        'hardware_mapping': 'adafruit-hat',
+        # 'adafruit-hat-pwm' gives better quality when the PWM jumper is soldered.
+        'hardware_mapping': 'adafruit-hat-pwm',
         # GPIO slowdown: 4 for Pi 4, 2 for Pi 3 / Zero 2
         'gpio_slowdown': 4,
         'brightness': 80,           # 0–100 (high values draw significant current)
@@ -88,7 +118,7 @@ DEFAULT_CONFIG: dict = {
         'pwm_bits': 11,             # 1–11; lower = less flicker, less colour depth
         'panel_type': '',           # Set to 'FM6126A' for high-refresh panels with that driver IC
         'show_refresh_rate': False,
-        'disable_hardware_pulsing': False,
+        'disable_hardware_pulsing': True,
     },
     'display': {
         # How to fit images onto the 64×64 canvas:
@@ -107,23 +137,31 @@ DEFAULT_CONFIG: dict = {
         # Post-processing applied after downscaling to the panel resolution.
         # These compensate for the softening and colour loss of heavy downscaling.
         'sharpen': 1.2,       # Unsharp-mask strength: 0.0 = off, 1.0 = subtle, 2.0+ = aggressive
-        'saturation': 1.2,    # Colour saturation multiplier: 1.0 = unchanged, 1.3 = vivid
+        'saturation': 1.3,    # Colour saturation multiplier: 1.0 = unchanged, 1.3 = vivid
         'contrast': 1.1,      # Contrast multiplier: 1.0 = unchanged
+        # Pre-blur radius applied before downscaling when source is much larger than target.
+        # Smooths fine detail that would otherwise become noise on the small panel.
+        # 0.0 = off, 1.0 = gentle (recommended), 2.0 = heavy
+        'pre_blur': 1.0,
+        # Posterize: reduce to N bits per channel to simplify complex images (0 = off, 4 = recommended)
+        'posterize': 0,
     },
     'spotify': {
         'client_id': '',
         'client_secret': '',
-        'redirect_uri': 'http://localhost:8888/callback',
+        'redirect_uri': 'http://127.0.0.1:8888/callback',
         'poll_interval': 5.0,         # Seconds between Spotify API polls
         'clear_on_stop': True,        # Clear screen when nothing is playing
         'clear_delay': 60.0,          # Seconds of inactivity before clearing
         # Named accounts — each gets its own token cache so you can switch
         # between Spotify users without re-authenticating.
-        # Run with:  python led_matrix_display.py spotify --account wife
-        'default_account': 'default',
-        'accounts': {
-            'default': {'cache_path': '.spotify_token_cache'},
-        },
+        # Run with:  python led_matrix_display.py spotify --account renan
+        'default_account': 'renan',
+        # Which account(s) to watch when spotify mode starts.
+        # Set to a specific account name to poll only that account.
+        # Set to 'all' (or leave blank) to poll all accounts (last-changed-wins).
+        'watch_account': 'all',
+        'accounts': {},
     },
 }
 
@@ -155,6 +193,7 @@ def _enhance_image(
     sharpen: float = 0.0,
     saturation: float = 1.0,
     contrast: float = 1.0,
+    posterize: int = 0,
 ) -> Image.Image:
     """Apply post-downscale enhancements to compensate for heavy resizing."""
     if saturation != 1.0:
@@ -163,7 +202,25 @@ def _enhance_image(
         img = ImageEnhance.Contrast(img).enhance(contrast)
     if sharpen > 0.0:
         img = img.filter(ImageFilter.UnsharpMask(radius=0.6, percent=int(sharpen * 80), threshold=2))
+    if posterize and 1 <= posterize <= 7:
+        img = ImageOps.posterize(img, posterize)
     return img
+
+
+def _pre_blur(img: Image.Image, target_w: int, target_h: int, radius: float) -> Image.Image:
+    """Blur *img* proportional to how much larger it is than the target size.
+
+    Only applied when the source is substantially larger than the target;
+    smooths high-frequency detail that would otherwise become noise after
+    heavy downscaling to a small LED panel.
+    """
+    if radius <= 0:
+        return img
+    scale = max(img.width / target_w, img.height / target_h)
+    if scale < 3:
+        return img  # small images don't need pre-blur
+    blur_r = radius * (scale / 8)  # gentle at 3× scale, stronger at high scale
+    return img.filter(ImageFilter.GaussianBlur(radius=max(0.5, blur_r)))
 
 
 def prepare_image(
@@ -175,17 +232,22 @@ def prepare_image(
     sharpen: float = 0.0,
     saturation: float = 1.0,
     contrast: float = 1.0,
+    pre_blur: float = 0.0,
+    posterize: int = 0,
 ) -> Image.Image:
     """Resize / crop / pad *img* to exactly (width × height)."""
     img = img.convert('RGB')  # always a fresh copy, correct mode
 
+    # Pre-blur before downscaling to reduce noise from very high-res sources
+    img = _pre_blur(img, width, height, pre_blur)
+
     if fit_mode == 'stretch':
         result = img.resize((width, height), Image.LANCZOS)
-        return _enhance_image(result, sharpen, saturation, contrast)
+        return _enhance_image(result, sharpen, saturation, contrast, posterize)
 
     if fit_mode == 'fill':
         result = ImageOps.fit(img, (width, height), Image.LANCZOS)
-        return _enhance_image(result, sharpen, saturation, contrast)
+        return _enhance_image(result, sharpen, saturation, contrast, posterize)
 
     # 'fit' and 'center' both build a canvas
     canvas = Image.new('RGB', (width, height), bg)
@@ -200,7 +262,7 @@ def prepare_image(
 
     offset = ((width - img.width) // 2, (height - img.height) // 2)
     canvas.paste(img, offset)
-    return _enhance_image(canvas, sharpen, saturation, contrast)
+    return _enhance_image(canvas, sharpen, saturation, contrast, posterize)
 
 
 def load_image_file(path: str) -> Image.Image:
@@ -378,9 +440,10 @@ def _fit(img: Image.Image, display: MatrixDisplay, cfg: dict) -> Image.Image:
     d = cfg['display']
     bg = tuple(d['background'])
     log.debug(
-        "Fit: %dx%d → %dx%d  mode=%s  sharpen=%.1f  sat=%.1f  contrast=%.1f",
+        "Fit: %dx%d → %dx%d  mode=%s  sharpen=%.1f  sat=%.1f  contrast=%.1f  pre_blur=%.1f",
         img.width, img.height, display.cols, display.rows,
         d['fit_mode'], d.get('sharpen', 0.0), d.get('saturation', 1.0), d.get('contrast', 1.0),
+        d.get('pre_blur', 0.0),
     )
     result = prepare_image(
         img, display.cols, display.rows,
@@ -388,6 +451,8 @@ def _fit(img: Image.Image, display: MatrixDisplay, cfg: dict) -> Image.Image:
         sharpen=d.get('sharpen', 0.0),
         saturation=d.get('saturation', 1.0),
         contrast=d.get('contrast', 1.0),
+        pre_blur=d.get('pre_blur', 0.0),
+        posterize=int(d.get('posterize', 0)),
     )
     log.debug("Fit: done")
     return result
@@ -642,10 +707,19 @@ class SpotifyPoller:
             response_url = input("\n  Paste the redirect URL here: ").strip()
             code = auth.parse_response_code(response_url)
             auth.get_access_token(code)
-        self.sp = spotipy.Spotify(auth_manager=auth)
+        # Disable Spotipy's retry-enabled requests Session; we want raw 429
+        # exceptions immediately so our own backoff logic controls timing.
+        self.sp = spotipy.Spotify(
+            auth_manager=auth,
+            requests_session=False,
+            retries=0,
+            status_retries=0,
+        )
         self._last_id: Optional[str] = None
         self._last_change_time: float = 0.0
         self._current_art: Optional[Image.Image] = None
+        self._is_playing: bool = False
+        self._retry_after_until: float = 0.0  # monotonic time; don't poll before this
 
     @property
     def last_change_time(self) -> float:
@@ -655,20 +729,52 @@ class SpotifyPoller:
     def current_art(self) -> Optional[Image.Image]:
         return self._current_art
 
+    @staticmethod
+    def _parse_retry_after(exc: Exception) -> float:
+        """Return the retry delay Spotify asked for, or 0 if none is available."""
+        try:
+            from spotipy.exceptions import SpotifyException
+            if isinstance(exc, SpotifyException) and exc.http_status == 429:
+                headers = getattr(exc, 'headers', None) or {}
+                retry_after = headers.get('Retry-After') or headers.get('retry-after')
+                if retry_after:
+                    return float(retry_after)
+                reason = getattr(exc, 'reason', None)
+                if isinstance(reason, (int, float)):
+                    return float(reason)
+        except Exception:
+            pass
+
+        text = str(getattr(exc, 'msg', '') or exc)
+        m = _re.search(r'Retry will occur after:\s*(\d+)', text, _re.I)
+        if m:
+            return float(m.group(1))
+
+        return float(getattr(_SpotifyRateLimitCapture, 'retry_after', 0) or 0.0)
+
     def get_current_art(self) -> Optional[Image.Image]:
         """
         Returns album art for the new track, or None if:
         - nothing is playing, or
         - the same track as last poll is still playing.
         """
+        self._is_playing = False
+        if time.monotonic() < self._retry_after_until:
+            return None
         try:
             result = self.sp.currently_playing(additional_types='track,episode')
         except Exception as exc:
-            log.warning("Spotify API error: %s", exc)
+            retry = self._parse_retry_after(exc)
+            if retry:
+                self._retry_after_until = time.monotonic() + retry
+                log.warning("Spotify rate limit — backing off for %.0fs", retry)
+            else:
+                log.warning("Spotify API error: %s", exc)
             return None
 
         if not result or not result.get('is_playing'):
             return None
+        self._is_playing = True
 
         item = result.get('item')
         if not item:
@@ -741,15 +847,20 @@ def mode_spotify(display: MatrixDisplay, cfg: dict, account: Optional[str] = Non
     if account:
         pollers = [SpotifyPoller(cfg, account=account)]
         log.info("Spotify mode (account: %s) — polling every %.1fs.", account, interval)
-    elif len(all_accounts) > 1:
-        pollers = [SpotifyPoller(cfg, account=name) for name in all_accounts]
-        log.info(
-            "Spotify mode (%d accounts, last-changed-wins) — polling every %.1fs.",
-            len(pollers), interval,
-        )
     else:
-        pollers = [SpotifyPoller(cfg)]
-        log.info("Spotify mode — polling every %.1fs.", interval)
+        watch = sp_cfg.get('watch_account', 'all')
+        if watch and watch != 'all' and watch in all_accounts:
+            pollers = [SpotifyPoller(cfg, account=watch)]
+            log.info("Spotify mode (account: %s) — polling every %.1fs.", watch, interval)
+        elif len(all_accounts) > 1:
+            pollers = [SpotifyPoller(cfg, account=name) for name in all_accounts]
+            log.info(
+                "Spotify mode (%d accounts, last-changed-wins) — polling every %.1fs.",
+                len(pollers), interval,
+            )
+        else:
+            pollers = [SpotifyPoller(cfg)]
+            log.info("Spotify mode — polling every %.1fs.", interval)
 
     clear_on_stop = bool(sp_cfg.get('clear_on_stop', True))
     clear_delay   = float(sp_cfg.get('clear_delay', 60.0))
@@ -767,13 +878,8 @@ def mode_spotify(display: MatrixDisplay, cfg: dict, account: Optional[str] = Non
         for poller in pollers:
             if poller.get_current_art() is not None:
                 any_changed = True
-            # A poller is "playing" if it changed recently or still has art
-            try:
-                result = poller.sp.currently_playing(additional_types='track,episode')
-                if result and result.get('is_playing'):
-                    any_playing = True
-            except Exception:
-                pass
+            if poller._is_playing:
+                any_playing = True
 
         if any_changed:
             # Show art from whichever account changed most recently

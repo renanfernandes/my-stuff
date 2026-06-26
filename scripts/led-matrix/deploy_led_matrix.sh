@@ -13,13 +13,19 @@ set -euo pipefail
 
 PI_HOST="10.0.0.81"
 PI_USER="renanfernandes"
-PI_DEST="/home/${PI_USER}/led_matrix"
+REMOTE_STAGE="/home/${PI_USER}/led_matrix_stage"
+APP_DEST="/opt/led_matrix"
+CFG_DEST="/etc/led-matrix"
+STATE_DEST="/var/lib/led-matrix"
+RUNTIME_CONFIG="${CFG_DEST}/led_matrix_display_config.yaml"
+LEGACY_APP_DEST="/home/${PI_USER}/led_matrix"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 FILES=(
     "led_matrix_display.py"
     "led_matrix_web.py"
+    "index.html"
     "led_matrix_display_config.yaml.example"
     "requirements_led_matrix.txt"
     "requirements_led_matrix_web.txt"
@@ -77,31 +83,31 @@ if [[ -f "$CONFIG" ]]; then
 fi
 
 # ── Create destination directory ──────────────────────────────────────────────
-info "Creating ${PI_USER}@${PI_HOST}:${PI_DEST} …"
-ssh "${PI_USER}@${PI_HOST}" "mkdir -p '${PI_DEST}/service_files'"
+info "Creating ${PI_USER}@${PI_HOST}:${REMOTE_STAGE} …"
+ssh "${PI_USER}@${PI_HOST}" "mkdir -p '${REMOTE_STAGE}/service_files'"
 
 # ── Sync core files ───────────────────────────────────────────────────────────
 info "Syncing files …"
 rsync -avz --progress \
     "${FILES[@]/#/${SCRIPT_DIR}/}" \
-    "${PI_USER}@${PI_HOST}:${PI_DEST}/"
+    "${PI_USER}@${PI_HOST}:${REMOTE_STAGE}/"
 
 # Sync config only if it exists locally, without overwriting an existing one on the Pi
 if [[ -f "$CONFIG" ]]; then
     rsync -avz --ignore-existing \
         "${CONFIG}" \
-        "${PI_USER}@${PI_HOST}:${PI_DEST}/"
+        "${PI_USER}@${PI_HOST}:${REMOTE_STAGE}/"
 fi
 
 # Sync service_files/ directory (preserves subdirectory structure)
 rsync -avz --progress \
     "${SCRIPT_DIR}/service_files/" \
-    "${PI_USER}@${PI_HOST}:${PI_DEST}/service_files/"
+    "${PI_USER}@${PI_HOST}:${REMOTE_STAGE}/service_files/"
 
 # ── Bootstrap config from example if no config exists on the Pi ───────────────
 info "Checking for config on the Pi …"
 ssh "${PI_USER}@${PI_HOST}" bash <<'REMOTE'
-DEST="${HOME}/led_matrix"
+DEST="${HOME}/led_matrix_stage"
 CONFIG="${DEST}/led_matrix_display_config.yaml"
 EXAMPLE="${DEST}/led_matrix_display_config.yaml.example"
 if [[ ! -f "${CONFIG}" && -f "${EXAMPLE}" ]]; then
@@ -121,7 +127,7 @@ if [[ "$INSTALL" == true ]]; then
     info "Installing Python dependencies on the Pi …"
     ssh "${PI_USER}@${PI_HOST}" bash <<REMOTE
         set -e
-        cd "${PI_DEST}"
+        cd "${REMOTE_STAGE}"
         pip3 install --quiet -r requirements_led_matrix.txt
         echo "  ✓ CLI packages installed."
 REMOTE
@@ -136,7 +142,7 @@ if [[ "$INSTALL_WEB" == true ]]; then
     info "Installing web server dependencies on the Pi …"
     ssh "${PI_USER}@${PI_HOST}" bash <<REMOTE
         set -e
-        cd "${PI_DEST}"
+        cd "${REMOTE_STAGE}"
         pip3 install --quiet -r requirements_led_matrix_web.txt
         echo "  ✓ Web server packages installed."
 REMOTE
@@ -145,7 +151,7 @@ fi
 # ── Optional: install systemd service ────────────────────────────────────────
 if [[ "$INSTALL_SERVICE" == true ]]; then
     info "Installing systemd service on the Pi …"
-    ssh -t "${PI_USER}@${PI_HOST}" "sudo cp '${PI_DEST}/service_files/led-matrix-web.service' /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl enable led-matrix-web && sudo systemctl restart led-matrix-web && echo '  ✓ Service installed and started.' && sudo systemctl status led-matrix-web --no-pager -l | head -20"
+    ssh -t "${PI_USER}@${PI_HOST}" "sudo mkdir -p '${APP_DEST}' '${CFG_DEST}' '${STATE_DEST}' && sudo rsync -a --delete --exclude='.spotify_token_*' --exclude='*.token' '${REMOTE_STAGE}/' '${APP_DEST}/' && sudo rm -f '${APP_DEST}/led_matrix_display_config.yaml' && if [[ ! -f '${RUNTIME_CONFIG}' ]]; then if [[ -f '${STATE_DEST}/led_matrix_display_config.yaml' ]]; then sudo cp '${STATE_DEST}/led_matrix_display_config.yaml' '${RUNTIME_CONFIG}'; elif [[ -f '${APP_DEST}/led_matrix_display_config.yaml' ]]; then sudo cp '${APP_DEST}/led_matrix_display_config.yaml' '${RUNTIME_CONFIG}'; fi; fi && sudo chown -R root:root '${APP_DEST}' '${CFG_DEST}' && sudo chmod 755 '${APP_DEST}' '${CFG_DEST}' && sudo chown root:daemon '${RUNTIME_CONFIG}' >/dev/null 2>&1 || true && sudo chmod 664 '${RUNTIME_CONFIG}' >/dev/null 2>&1 || true && sudo find '${CFG_DEST}' -name 'spotify_token_*' -exec sudo chown root:daemon {} \\; -exec sudo chmod 664 {} \\; && sudo chown -R root:daemon '${STATE_DEST}' && sudo chmod 775 '${STATE_DEST}' && sudo systemctl disable --now led-matrix-web >/dev/null 2>&1 || true && sudo rm -f /etc/systemd/system/led-matrix-web.service && sudo rm -rf '${LEGACY_APP_DEST}' && sudo cp '${APP_DEST}/service_files/led-matrix-web.service' /etc/systemd/system/led-matrix-web.service && sudo systemctl daemon-reload && sudo systemctl enable led-matrix-web && sudo systemctl restart led-matrix-web && echo '  ✓ Service installed and started (root mode).' && echo '  ✓ Legacy service file removed and legacy home install cleaned.' && sudo systemctl status led-matrix-web --no-pager -l | head -20"
 fi
 
 # ── Done ──────────────────────────────────────────────────────────────────────
@@ -153,13 +159,15 @@ echo ""
 info "Deploy complete!"
 echo ""
 echo "  SSH into the Pi:  ssh ${PI_USER}@${PI_HOST}"
-echo "  Working dir:      ${PI_DEST}"
+echo "  Stage dir:        ${REMOTE_STAGE}"
 echo ""
 echo "  SSH into the Pi:     ssh ${PI_USER}@${PI_HOST}"
-echo "  Working dir:         ${PI_DEST}"
+echo "  App dir:             ${APP_DEST}"
+echo "  Config dir:          ${CFG_DEST}"
+echo "  State dir (tokens):  ${STATE_DEST}"
 echo ""
 echo "  Web server (browser UI + API):"
-echo "    sudo python3 ${PI_DEST}/led_matrix_web.py"
+echo "    sudo python3 ${APP_DEST}/led_matrix_web.py --config ${RUNTIME_CONFIG}"
 echo "    open http://${PI_HOST}:5000  in your browser"
 echo ""
 echo "  Service management:"
@@ -169,10 +177,10 @@ echo "    sudo systemctl restart led-matrix-web"
 echo "    journalctl -u led-matrix-web -f"
 echo ""
 echo "  CLI — quick test (simulation, no hardware):"
-echo "    python3 ${PI_DEST}/led_matrix_display.py --simulate image <photo.png>"
+echo "    python3 ${APP_DEST}/led_matrix_display.py --config ${RUNTIME_CONFIG} --simulate image <photo.png>"
 echo ""
 echo "  CLI — hardware run (requires sudo for GPIO):"
-echo "    sudo python3 ${PI_DEST}/led_matrix_display.py spotify"
+echo "    sudo python3 ${APP_DEST}/led_matrix_display.py --config ${RUNTIME_CONFIG} spotify"
 echo ""
 echo "  First time?  Edit the config before running:"
-echo "    nano ${PI_DEST}/led_matrix_display_config.yaml"
+echo "    sudo nano ${RUNTIME_CONFIG}"

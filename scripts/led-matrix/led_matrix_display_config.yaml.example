@@ -16,7 +16,7 @@ matrix:
   # ── Adafruit RGB Matrix Bonnet hardware mapping ────────────────────────────
   # adafruit-hat      → standard (no hardware modifications needed)
   # adafruit-hat-pwm  → better colour quality (requires soldering a jumper on the Bonnet)
-  hardware_mapping: adafruit-hat
+  hardware_mapping: adafruit-hat-pwm
 
   # ── GPIO slowdown — tune to your Raspberry Pi model ───────────────────────
   # Raspberry Pi 5         → 4
@@ -29,7 +29,7 @@ matrix:
   brightness: 80              # 0–100 (values above 80 draw significant current)
   pwm_lsb_nanoseconds: 130    # Lower = better quality, more CPU usage
   show_refresh_rate: false    # Print refresh rate to stdout (debug)
-  disable_hardware_pulsing: false  # Set true if you see flicker on Pi 4
+  disable_hardware_pulsing: true   # Disable hardware pulsing to reduce flicker
 
 
 display:
@@ -42,6 +42,16 @@ display:
 
   # Padding / background colour [R, G, B] used by 'fit' and 'center' modes
   background: [0, 0, 0]
+
+  # ── Image quality tuning ───────────────────────────────────────────────────
+  # Pre-blur applied before downscaling when source is much larger than panel.
+  # Smooths fine detail that becomes visual noise on a 64×64 display.
+  # 0.0 = off, 1.0 = gentle (recommended for album art), 2.0 = heavy
+  pre_blur: 1.0
+
+  # Posterize: reduce bits per channel to simplify complex images.
+  # 0 = off, 4 = recommended for very busy album art, 5 = subtle
+  posterize: 0
 
   # ── Slideshow ──────────────────────────────────────────────────────────────
   slideshow_interval: 10    # Seconds to display each image
@@ -59,7 +69,7 @@ spotify:
   #    The token is cached in cache_path for subsequent runs.
   client_id: "your_client_id_here"
   client_secret: "your_client_secret_here"
-  redirect_uri: "http://localhost:8888/callback"
+  redirect_uri: "http://127.0.0.1:8888/callback"
 
   poll_interval: 5          # Seconds between "what's playing?" API polls
 

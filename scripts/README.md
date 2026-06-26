@@ -9,6 +9,7 @@ A collection of Python automation scripts for various home services and monitori
 |--------|---------|-----------|
 | `azure_ddns_updater.py` | Dynamic DNS for Azure | ⏱️ 5 min |
 | `ip_changer_notifier.py` | Monitor IP changes | ⏱️ 3 min |
+| `raspi_sd_backup.py` | Monthly full Raspberry Pi SD image backups | ⏱️ 15 min |
 | `nzbgget_sftp_transfer.py` | Auto-transfer downloads | ⏱️ 10 min |
 | `transmission_checker.py` | Torrent completion alerts | ⏱️ 5 min |
 | `s31.yaml` | Sonoff S31 smart outlet | ⏱️ 15 min |
@@ -20,6 +21,8 @@ A collection of Python automation scripts for various home services and monitori
 - [Network & DNS](#network--dns)
   - [azure_ddns_updater.py](#-azure_ddns_updaterpy)
   - [ip_changer_notifier.py](#-ip_changer_notifierpy)
+- [Infrastructure Backup](#infrastructure-backup)
+   - [raspi_sd_backup.py](#-raspi_sd_backuppy)
 - [Download & Transfer](#download--transfer)
   - [nzbgget_sftp_transfer.py & SFTPTransfer.py](#-nzbgget_sftp_transferpy--sftptransferpy)
   - [transmission_checker.py](#-transmission_checkerpy)
@@ -163,6 +166,127 @@ python3 ip_changer_notifier.py
 **Scheduling (cron):**
 ```bash
 */15 * * * * /usr/bin/env python3 /path/to/ip_changer_notifier.py >> /tmp/ip_changer_notifier.log 2>&1
+```
+
+---
+
+## Infrastructure Backup
+
+### 💾 `raspi_sd_backup.py`
+**Monthly full Raspberry Pi SD image backups (Campinas/Decatur) to iCloud Drive**
+
+Creates full SD card images over SSH and stores compressed backups in your iCloud Drive folder for easy recovery.
+
+**Features:**
+- Full image backup from `/dev/mmcblk0` (or other configured device)
+- Per-host folders and timestamped files
+- SHA256 checksum file generation
+- Retention policy (keep last N images per host)
+- Host filtering (`--host`) for one-off runs
+- Optional Pushover notifications for start, failure, and completion
+
+**Requirements:**
+- `pyyaml`
+- `requests`
+- SSH key access from this Mac to each Raspberry Pi
+- Remote user with passwordless sudo for `dd` command
+
+**Setup:**
+
+1. Copy the example config:
+   ```bash
+   cp raspi_sd_backup_config.yaml.example raspi_sd_backup_config.yaml
+   ```
+
+2. Edit `raspi_sd_backup_config.yaml`:
+   - Set `backup_root` to your iCloud folder
+   - Set hostnames/IPs for Campinas and Decatur
+   - Confirm `source_device` (normally `/dev/mmcblk0`)
+
+3. Install dependency:
+   ```bash
+   pip install pyyaml requests
+   ```
+
+4. On each Pi, allow non-interactive sudo for dd:
+   ```bash
+   sudo visudo
+   ```
+   Add a line like:
+   ```
+   pi ALL=(root) NOPASSWD: /bin/dd
+   ```
+
+**Usage:**
+```bash
+# Backup all enabled hosts
+python3 raspi_sd_backup.py
+
+# Backup only one host
+python3 raspi_sd_backup.py --host campinas-pi
+```
+
+**Pushover notifications (optional):**
+Enable in `raspi_sd_backup_config.yaml`:
+```yaml
+pushover:
+   enabled: true
+   user_key: "your-pushover-user-key"
+   api_token: "your-pushover-api-token"
+```
+Notification events:
+- Backup run started
+- Per-host failure
+- Final run summary (success or success-with-errors)
+
+**Restore (example):**
+```bash
+# 1) Decompress
+gunzip -k campinas-pi_YYYYMMDD_HHMMSS.img.gz
+
+# 2) Flash to a new SD card (replace disk path carefully)
+sudo dd if=campinas-pi_YYYYMMDD_HHMMSS.img of=/dev/rdiskN bs=4m status=progress
+```
+
+**Monthly Scheduling (macOS launchd):**
+Create `~/Library/LaunchAgents/com.local.raspi-sd-backup.plist` with:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.local.raspi-sd-backup</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/env</string>
+    <string>python3</string>
+    <string>/path/to/my-stuff/scripts/raspi_sd_backup.py</string>
+  </array>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Day</key>
+    <integer>1</integer>
+    <key>Hour</key>
+    <integer>2</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/tmp/raspi_sd_backup.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/raspi_sd_backup.err.log</string>
+</dict>
+</plist>
+```
+
+Then load it:
+```bash
+launchctl load ~/Library/LaunchAgents/com.local.raspi-sd-backup.plist
 ```
 
 ---
