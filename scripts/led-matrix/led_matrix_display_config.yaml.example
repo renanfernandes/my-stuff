@@ -40,6 +40,10 @@ display:
   # center  — centre without upscaling; scale down only if too large
   fit_mode: fit
 
+  # Rotate final output to match how the panel is physically mounted.
+  # Clockwise degrees: 0, 90, 180, 270
+  orientation: 0
+
   # Padding / background colour [R, G, B] used by 'fit' and 'center' modes
   background: [0, 0, 0]
 

@@ -9,6 +9,7 @@ A collection of Python automation scripts for various home services and monitori
 |--------|---------|-----------|
 | `azure_ddns_updater.py` | Dynamic DNS for Azure | ⏱️ 5 min |
 | `ip_changer_notifier.py` | Monitor IP changes | ⏱️ 3 min |
+| `pihole_sync.py` | Sync local DNS records between two Pi-hole instances | ⏱️ 10 min |
 | `raspi_sd_backup.py` | Monthly full Raspberry Pi SD image backups | ⏱️ 15 min |
 | `nzbgget_sftp_transfer.py` | Auto-transfer downloads | ⏱️ 10 min |
 | `transmission_checker.py` | Torrent completion alerts | ⏱️ 5 min |
@@ -21,6 +22,7 @@ A collection of Python automation scripts for various home services and monitori
 - [Network & DNS](#network--dns)
   - [azure_ddns_updater.py](#-azure_ddns_updaterpy)
   - [ip_changer_notifier.py](#-ip_changer_notifierpy)
+  - [pihole_sync.py](#-pihole_syncpy)
 - [Infrastructure Backup](#infrastructure-backup)
    - [raspi_sd_backup.py](#-raspi_sd_backuppy)
 - [Download & Transfer](#download--transfer)

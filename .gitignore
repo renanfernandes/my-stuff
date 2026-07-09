@@ -3,3 +3,4 @@ scripts/azure_ddns_updater_config.yaml
 scripts/ip_changer_notifier_config.yaml
 scripts/raspi_sd_backup_config.yaml
 scripts/SESSION_HANDOFF.txt
+scripts/pihole_sync_config.yaml

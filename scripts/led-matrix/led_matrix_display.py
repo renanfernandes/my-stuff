@@ -127,6 +127,9 @@ DEFAULT_CONFIG: dict = {
         #   stretch — stretch to exact size (may distort)
         #   center  — centre without upscaling; scale down only if too large
         'fit_mode': 'fit',
+        # Rotate final output to match panel mounting orientation.
+        # Supported values: 0, 90, 180, 270 (clockwise).
+        'orientation': 0,
         'background': [0, 0, 0],      # RGB pad colour used by fit / center modes
         'slideshow_interval': 10.0,   # Seconds to show each image
         'loop': True,
@@ -184,6 +187,49 @@ def load_config(path: Optional[str]) -> dict:
     with open(path) as fh:
         user_cfg = yaml.safe_load(fh) or {}
     return _deep_merge(DEFAULT_CONFIG, user_cfg)
+
+
+def _normalize_orientation(value) -> int:
+    """Return orientation in clockwise degrees (0/90/180/270)."""
+    if value is None:
+        return 0
+
+    if isinstance(value, int):
+        deg = value % 360
+    else:
+        text = str(value).strip().lower()
+        aliases = {
+            'normal': 0,
+            'none': 0,
+            '0': 0,
+            '90': 90,
+            '180': 180,
+            '270': 270,
+            'cw90': 90,
+            'cw180': 180,
+            'cw270': 270,
+            'ccw90': 270,
+        }
+        if text not in aliases:
+            raise ValueError(
+                f"Invalid orientation: {value!r}. Choose one of: 0, 90, 180, 270"
+            )
+        deg = aliases[text]
+
+    if deg not in (0, 90, 180, 270):
+        raise ValueError(
+            f"Invalid orientation: {value!r}. Choose one of: 0, 90, 180, 270"
+        )
+    return deg
+
+
+def _apply_orientation(img: Image.Image, orientation) -> Image.Image:
+    """Rotate *img* clockwise according to configured orientation."""
+    deg = _normalize_orientation(orientation)
+    if deg == 0:
+        return img
+    # PIL rotate uses counter-clockwise positive angles; negate for clockwise.
+    return img.rotate(-deg, expand=False)
 
 
 # ── Image helpers ──────────────────────────────────────────────────────────────
@@ -445,6 +491,7 @@ def _fit(img: Image.Image, display: MatrixDisplay, cfg: dict) -> Image.Image:
         d['fit_mode'], d.get('sharpen', 0.0), d.get('saturation', 1.0), d.get('contrast', 1.0),
         d.get('pre_blur', 0.0),
     )
+    orientation = d.get('orientation', 0)
     result = prepare_image(
         img, display.cols, display.rows,
         fit_mode=d['fit_mode'], bg=bg,
@@ -454,6 +501,7 @@ def _fit(img: Image.Image, display: MatrixDisplay, cfg: dict) -> Image.Image:
         pre_blur=d.get('pre_blur', 0.0),
         posterize=int(d.get('posterize', 0)),
     )
+    result = _apply_orientation(result, orientation)
     log.debug("Fit: done")
     return result
 
@@ -931,6 +979,10 @@ def main():
         help='Simulation mode: render in a Tkinter window instead of hardware',
     )
     parser.add_argument('-v', '--verbose', action='store_true', help='Debug logging')
+    parser.add_argument(
+        '--orientation', metavar='DEG', choices=['0', '90', '180', '270'],
+        help='Rotate output clockwise (overrides config display.orientation)',
+    )
 
     subs = parser.add_subparsers(dest='mode', required=True)
 
@@ -970,6 +1022,9 @@ def main():
         if default.exists():
             cfg_path = str(default)
     cfg = load_config(cfg_path)
+
+    if args.orientation is not None:
+        cfg['display']['orientation'] = int(args.orientation)
 
     # CLI overrides for slideshow
     if args.mode == 'slideshow':

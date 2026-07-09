@@ -1,0 +1,20 @@
+# Example config for pihole_sync.py
+# Copy this to pihole_sync_config.yaml and edit the values.
+
+ssh_user: "pi"
+ssh_port: 22
+sudo_prefix: "sudo -n"
+strict_host_key_checking: true
+remote_dns_file: "/etc/pihole/pihole.toml"
+
+primary:
+  name: "decatur"
+  host: "decatur-pihole.local"
+  ssh_user: "pi"
+  ssh_port: 22
+
+secondary:
+  name: "campinas"
+  host: "campinas-pihole.local"
+  ssh_user: "pi"
+  ssh_port: 22

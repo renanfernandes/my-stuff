@@ -192,6 +192,14 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
       <option value="center">center &mdash; no upscaling</option>
     </select>
   </label>
+  <label>Orientation
+    <select id="cfg-disp-orientation">
+      <option value="0">0&deg; (normal)</option>
+      <option value="90">90&deg; clockwise</option>
+      <option value="180">180&deg;</option>
+      <option value="270">270&deg; clockwise</option>
+    </select>
+  </label>
   <label>Brightness: <span id="brightness-val">80</span>%
     <input type="range" id="cfg-mat-brightness" min="0" max="100"
            oninput="document.getElementById('brightness-val').textContent=this.value">
@@ -429,6 +437,7 @@ async function loadConfig() {
     _v('cfg-sp-poll_interval',  sp.poll_interval ?? 5);
 
     _v('cfg-disp-fit_mode',            d.fit_mode || 'fit');
+    _v('cfg-disp-orientation',         String(d.orientation ?? 0));
     _v('cfg-disp-slideshow_interval',  d.slideshow_interval ?? 10);
     _v('cfg-disp-transition',          d.transition || 'fade');
     _v('cfg-disp-transition_duration', d.transition_duration ?? 0.6);
@@ -500,6 +509,7 @@ async function saveDisplayConfig() {
   await _postConfig({
     display: {
       fit_mode:            document.getElementById('cfg-disp-fit_mode').value,
+      orientation:         parseInt(document.getElementById('cfg-disp-orientation').value, 10) || 0,
       slideshow_interval:  parseFloat(document.getElementById('cfg-disp-slideshow_interval').value) || 10,
       transition:          document.getElementById('cfg-disp-transition').value,
       transition_duration: parseFloat(document.getElementById('cfg-disp-transition_duration').value) || 0.6,
